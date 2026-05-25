@@ -25,6 +25,9 @@ export default function GroupDetailsPage() {
   const [allAssignments, setAllAssignments] = useState<any[]>([]);
   const [isFetchingAssignments, setIsFetchingAssignments] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  
+  // Custom Confirmation Modal state
+  const [assignmentToRemove, setAssignmentToRemove] = useState<string | null>(null);
 
   useEffect(() => {
     loadGroup();
@@ -75,16 +78,17 @@ export default function GroupDetailsPage() {
     }
   };
 
-  const handleRemoveAssignment = async (assignmentId: string) => {
-    if (!confirm('Are you sure you want to remove this assignment from the group?')) return;
+  const confirmRemoveAssignment = async () => {
+    if (!assignmentToRemove) return;
     try {
       const token = localStorage.getItem('veda_token');
-      const res = await fetch(`${API_BASE_URL}/groups/${groupId}/assignments/${assignmentId}`, {
+      const res = await fetch(`${API_BASE_URL}/groups/${groupId}/assignments/${assignmentToRemove}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to remove assignment');
       showToast('Assignment removed from group', 'success');
+      setAssignmentToRemove(null);
       await loadGroup(); // refresh
       await fetchGroups(); // update global count
     } catch (err: any) {
@@ -165,7 +169,7 @@ export default function GroupDetailsPage() {
                     </p>
                   </div>
                   <button 
-                    onClick={() => handleRemoveAssignment(assignment._id)}
+                    onClick={() => setAssignmentToRemove(assignment._id)}
                     className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     title="Remove from group"
                   >
@@ -234,6 +238,35 @@ export default function GroupDetailsPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REMOVE ASSIGNMENT CONFIRMATION MODAL */}
+      {assignmentToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setAssignmentToRemove(null)}></div>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm relative z-10 animate-in zoom-in-95 duration-200 p-6 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h2 className="text-lg font-black text-gray-800 mb-2">Remove Assignment</h2>
+            <p className="text-sm font-semibold text-gray-500 mb-6">Are you sure you want to remove this assignment from the group? This action cannot be undone.</p>
+            
+            <div className="flex w-full gap-3">
+              <button 
+                onClick={() => setAssignmentToRemove(null)}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-sm rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmRemoveAssignment}
+                className="flex-1 py-2.5 bg-red-500 text-white hover:bg-red-600 font-bold text-sm rounded-xl transition-colors shadow-md shadow-red-200"
+              >
+                Remove
+              </button>
             </div>
           </div>
         </div>
