@@ -261,7 +261,6 @@ export default function CreateAssignment() {
 
     // Listen to progression events
     socket.on('assignment-progress', (data: any) => {
-      console.log('WS Progress Update:', data);
       setGenerationProgress(data);
 
       if (data.status === 'COMPLETED') {
