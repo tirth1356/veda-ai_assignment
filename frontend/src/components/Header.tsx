@@ -15,6 +15,7 @@ import {
   Menu
 } from 'lucide-react';
 import { useAssignmentStore } from '../store/useAssignmentStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -24,6 +25,7 @@ export default function Header({ onToggleMobileMenu }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const assignments = useAssignmentStore((state) => state.assignments);
+  const logout = useAuthStore((state) => state.logout);
 
   // States
   const [userName, setUserName] = useState('John Doe');
@@ -287,8 +289,8 @@ export default function Header({ onToggleMobileMenu }: HeaderProps) {
               </button>
               <button
                 onClick={() => {
-                  localStorage.clear();
-                  window.location.reload();
+                  setShowSignOutConfirm(false);
+                  logout();
                 }}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-bold transition-all shadow-md"
               >

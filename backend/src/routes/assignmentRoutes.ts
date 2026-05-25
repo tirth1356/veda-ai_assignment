@@ -8,7 +8,9 @@ import { generateAssignmentPDFBuffer } from '../services/pdfService';
 import { redisClient } from '../config/redis';
 import { generateAssessmentPaper } from '../services/aiService';
 import { emitAssignmentProgress } from '../config/socket';
+import { emitAssignmentProgress } from '../config/socket';
 import pdfParse from 'pdf-parse';
+import { protect } from '../middleware/authMiddleware';
 
 
 
@@ -48,7 +50,7 @@ const upload = multer({
  * @route   POST /api/assignments
  * @desc    Create a new assignment creation task
  */
-router.post('/', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+router.post('/', protect, upload.single('file'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { 
       title, 
@@ -108,6 +110,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
 
     // Create MongoDB entry
     const assignment = new Assignment({
+      user: (req as any).user.id,
       title: title || 'Quiz',
       dueDate: new Date(dueDate),
       questionTypes: parsedQuestionTypes,
@@ -159,9 +162,9 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
  * @route   GET /api/assignments
  * @desc    Get all assignments list (minimal details for list view)
  */
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+router.get('/', protect, async (req: Request, res: Response): Promise<void> => {
   try {
-    const assignments = await Assignment.find()
+    const assignments = await Assignment.find({ user: (req as any).user.id })
       .select('-sections -answerKey') // Omit large fields for listing
       .sort({ createdAt: -1 });
     
@@ -176,9 +179,9 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  * @route   GET /api/assignments/:id
  * @desc    Get full details of a specific assignment
  */
-router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+router.get('/:id', protect, async (req: Request, res: Response): Promise<void> => {
   try {
-    const assignment = await Assignment.findById(req.params.id);
+    const assignment = await Assignment.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
@@ -194,9 +197,9 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
  * @route   DELETE /api/assignments/:id
  * @desc    Delete an assignment
  */
-router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', protect, async (req: Request, res: Response): Promise<void> => {
   try {
-    const assignment = await Assignment.findById(req.params.id);
+    const assignment = await Assignment.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
@@ -216,7 +219,7 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
       console.error('Failed to invalidate Redis cache during deletion:', err);
     });
 
-    await Assignment.findByIdAndDelete(req.params.id);
+    await Assignment.findOneAndDelete({ _id: req.params.id, user: (req as any).user.id });
     res.json({ message: 'Assignment successfully deleted.' });
   } catch (error: any) {
     console.error('Error deleting assignment:', error);
@@ -228,9 +231,9 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
  * @route   POST /api/assignments/:id/regenerate
  * @desc    Re-run generation for an assignment
  */
-router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void> => {
+router.post('/:id/regenerate', protect, async (req: Request, res: Response): Promise<void> => {
   try {
-    const assignment = await Assignment.findById(req.params.id);
+    const assignment = await Assignment.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
@@ -264,10 +267,10 @@ router.post('/:id/regenerate', async (req: Request, res: Response): Promise<void
  * @route   POST /api/assignments/:id/apply-changes
  * @desc    Apply user feedback to an assignment and regenerate
  */
-router.post('/:id/apply-changes', async (req: Request, res: Response): Promise<void> => {
+router.post('/:id/apply-changes', protect, async (req: Request, res: Response): Promise<void> => {
   try {
     const { feedback } = req.body;
-    const assignment = await Assignment.findById(req.params.id);
+    const assignment = await Assignment.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!assignment) {
       res.status(404).json({ error: 'Assignment not found' });
       return;
