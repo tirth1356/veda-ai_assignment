@@ -65,13 +65,12 @@ VedaAI is a full-stack AI-powered assessment generator application built based o
                                                            [ MongoDB DB: COMPLETED status]
 ```
 
-1. **Submission**: The teacher submits the stepper form (topic, due date, additional guidelines, question criteria, and optional reference files).
-2. **Database & Queueing**: The Express backend creates an `Assignment` in MongoDB with status `PENDING` and dispatches a background task to the Redis-backed **BullMQ** queue. The API returns `202 Accepted` immediately.
-3. **Processing Overlay**: The frontend switches to Step 2 (processing monitor) and initiates a WebSocket connection via `socket.io-client`. It joins a dedicated channel room (`assignment:<id>`) for real-time state updates.
-4. **Document Parsing & AI Generation**: The BullMQ Worker parses reference text from uploaded documents (using `pdf-parse` for PDFs) and submits a structured system prompt to an **OpenAI-compatible LLM provider** (like Grok, Groq, or OpenAI) using JSON Mode to guarantee output validity.
-5. **Real-time Feedback**: The worker emits progress percentages and status messages to the client at each stage over WebSockets.
-6. **Completion**: Once saved to MongoDB, status turns `COMPLETED`. The client redirects to the outputs sheet, displaying the formal formatted exam paper and the separate Answer Key. The teacher can download it as a print-ready PDF generated dynamically on the server via `pdfkit`.
-
+1. Teacher submits assignment metadata, constraints, and optional reference files.
+2. Express API creates a `PENDING` assignment in MongoDB and dispatches a BullMQ background job via Redis, returning `202 Accepted`.
+3. Frontend establishes a `socket.io` connection and subscribes to `assignment:<id>` for real-time job events.
+4. BullMQ workers parse uploaded documents (e.g., PDFs via `pdf-parse`) and invoke an OpenAI-compatible LLM in JSON Mode for structured generation.
+5. Workers stream progress/state updates over WebSockets during processing.
+6. Generated outputs and answer keys are persisted in MongoDB with `COMPLETED` status and exported as print-ready PDFs using `pdfkit`.
 ---
 
 ## 🛠️ Tech Stack
