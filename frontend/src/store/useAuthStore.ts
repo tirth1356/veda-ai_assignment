@@ -40,6 +40,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('veda_token');
     localStorage.removeItem('veda_user_name');
     localStorage.removeItem('veda_user_email');
+    localStorage.removeItem('veda_school_name');
+    localStorage.removeItem('veda_school_city');
     
     if (typeof window !== 'undefined') {
       window.location.href = '/';

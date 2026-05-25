@@ -51,7 +51,7 @@ export default function DashboardCharts({ data }: ChartProps) {
         <p className="text-xs text-gray-400">Activity overview</p>
       </div>
       <div className="flex-1 w-full min-h-[150px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">

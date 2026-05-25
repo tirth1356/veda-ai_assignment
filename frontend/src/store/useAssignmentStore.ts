@@ -86,7 +86,10 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
   fetchAssignments: async () => {
     set({ isLoading: true });
     try {
-      const response = await fetch(`${API_BASE_URL}/assignments`);
+      const token = localStorage.getItem('veda_token');
+      const response = await fetch(`${API_BASE_URL}/assignments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error('Failed to fetch assignments');
       const data = await response.json();
       set({ assignments: data, isLoading: false });
@@ -99,7 +102,10 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
   fetchAssignmentDetails: async (id: string) => {
     set({ currentLoading: true });
     try {
-      const response = await fetch(`${API_BASE_URL}/assignments/${id}`);
+      const token = localStorage.getItem('veda_token');
+      const response = await fetch(`${API_BASE_URL}/assignments/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error('Failed to fetch assignment details');
       const data = await response.json();
       set({ currentAssignment: data, currentLoading: false });
@@ -121,8 +127,10 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
     });
 
     try {
+      const token = localStorage.getItem('veda_token');
       const response = await fetch(`${API_BASE_URL}/assignments`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
@@ -151,8 +159,10 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
 
   deleteAssignment: async (id: string) => {
     try {
+      const token = localStorage.getItem('veda_token');
       const response = await fetch(`${API_BASE_URL}/assignments/${id}`, {
         method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to delete assignment');
       set({
@@ -177,8 +187,10 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
     });
 
     try {
+      const token = localStorage.getItem('veda_token');
       const response = await fetch(`${API_BASE_URL}/assignments/${id}/regenerate`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to regenerate assignment');
@@ -207,9 +219,13 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
     });
 
     try {
+      const token = localStorage.getItem('veda_token');
       const response = await fetch(`${API_BASE_URL}/assignments/${id}/apply-changes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ feedback }),
       });
 
