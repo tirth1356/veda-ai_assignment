@@ -102,7 +102,7 @@ const AssignmentSchema = new Schema<IAssignment>({
   subject: { type: String, default: 'Science' },
   className: { type: String, default: 'Grade 8' },
   timeAllowed: { type: String, default: '45 minutes' },
-  difficulty: { type: String, enum: ['Mixed', 'Easy', 'Medium', 'Hard'], default: 'Mixed' },
+  difficulty: { type: String, default: 'Mixed' },
 
   sections: [SectionSchema],
   answerKey: [AnswerKeyItemSchema]
