@@ -24,11 +24,14 @@ app.use('/uploads', express.static(path.resolve('uploads')));
 
 import authRoutes from './routes/authRoutes';
 
+import groupRoutes from './routes/groupRoutes';
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/groups', groupRoutes);
 
 
 // Simple healthcheck route

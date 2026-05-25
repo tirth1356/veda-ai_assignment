@@ -50,7 +50,7 @@ export default function DashboardCharts({ data }: ChartProps) {
         <h3 className="text-sm font-extrabold text-gray-800">Assessments Created (Last 7 Days)</h3>
         <p className="text-xs text-gray-400">Activity overview</p>
       </div>
-      <div className="flex-1 w-full min-h-0">
+      <div className="flex-1 w-full min-h-[150px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
