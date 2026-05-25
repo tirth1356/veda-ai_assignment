@@ -8,7 +8,6 @@ import { generateAssignmentPDFBuffer } from '../services/pdfService';
 import { redisClient } from '../config/redis';
 import { generateAssessmentPaper } from '../services/aiService';
 import { emitAssignmentProgress } from '../config/socket';
-import { emitAssignmentProgress } from '../config/socket';
 import pdfParse from 'pdf-parse';
 import { protect } from '../middleware/authMiddleware';
 
