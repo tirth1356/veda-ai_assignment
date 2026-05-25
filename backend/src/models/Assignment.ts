@@ -56,7 +56,7 @@ export interface IAssignment extends Document {
 
 const QuestionSchema = new Schema<IQuestion>({
   questionText: { type: String, required: true },
-  difficulty: { type: String, enum: ['Easy', 'Moderate', 'Challenging'], required: true },
+  difficulty: { type: String, required: true },
   marks: { type: Number, required: true },
   svgDiagram: { type: String }
 });
