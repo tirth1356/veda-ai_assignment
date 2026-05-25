@@ -60,7 +60,7 @@ export const generateAssignmentPDFBuffer = (assignment: IAssignment): Promise<Bu
       doc.moveDown(0.5);
       doc.text('Roll Number: _____________________________________________', 50, doc.y);
       doc.moveDown(0.5);
-      doc.text(`Class: ${assignment.className || 'Grade 8'} Section: ______________________________________`, 50, doc.y);
+      doc.text('Section: _________________________________________________', 50, doc.y);
       doc.moveDown(1.2);
 
 
