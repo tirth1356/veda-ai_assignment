@@ -151,7 +151,7 @@ export default function Header({ onToggleMobileMenu }: HeaderProps) {
         ) : (
           /* Mobile Logo (hidden on desktop because sidebar is visible) */
           <div className="lg:hidden flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-tr from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md animate-pulse">
+            <div className="w-8 h-8 bg-gradient-to-tr from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md">
               <span className="text-white font-extrabold text-sm font-sans">V</span>
             </div>
             <span className="text-lg font-black text-gray-900 tracking-tight font-sans">

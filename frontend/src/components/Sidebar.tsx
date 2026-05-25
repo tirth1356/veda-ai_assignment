@@ -85,7 +85,7 @@ export default function Sidebar({ isMobileDrawer = false, onCloseMobileDrawer }:
 
       {/* Brand Logo */}
       <div className="flex items-center gap-3 px-2 mb-8">
-        <div className="w-10 h-10 bg-gradient-to-tr from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-md shadow-orange-200 animate-pulse">
+        <div className="w-10 h-10 bg-gradient-to-tr from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-md shadow-orange-200">
           <span className="text-white font-extrabold text-xl font-sans">V</span>
         </div>
         <span className="text-2xl font-black text-gray-900 tracking-tight font-sans">

@@ -92,21 +92,27 @@ export default function SettingsPage() {
         localStorage.removeItem('veda_user_avatar');
       }
 
-      // 2. Call backend to update MongoDB
-      const response = await fetch(`${API_BASE_URL}/users/${email}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          schoolName,
-          schoolCity,
-        }),
-      });
+      // 2. Call backend to update MongoDB (Sync)
+      if (email) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/users/${email}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name,
+              schoolName,
+              schoolCity,
+            }),
+          });
 
-      if (!response.ok) {
-        throw new Error('Failed to update server record.');
+          if (!response.ok) {
+            console.warn('Failed to update server record.');
+          }
+        } catch (e) {
+          console.warn('Backend sync failed (network error), but local settings saved:', e);
+        }
       }
 
       showToast('Settings saved successfully! Reloading to apply changes...', 'success');

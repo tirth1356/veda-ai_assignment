@@ -14,13 +14,16 @@ VedaAI is a full-stack AI-powered assessment generator application built based o
 - **Real-time Processing Updates**: Live WebSockets integration to display assessment generation progress in real-time.
 
 ## ⭐ Bonus Features
-- **Assessment Preview**: Real-time preview of the generated question paper.
-- **File Management (/myfiles)**: Dedicated section to manage and view uploaded context materials.
-- **Authentication**: Custom Login and Sign-up pages for secure access.
-- **PDF Export**: Download generated assessments as properly formatted, print-ready PDFs (not raw HTML prints).
-- **Action Bar**: Options to regenerate questions or perform contextual actions directly from the output view.
-- **Visual Difficulty Tags**: Color-coded badges highlighting Easy, Moderate, and Hard difficulty levels.
-- **Job Queues & Caching**: Robust background job handling using BullMQ and Redis for seamless generation.
+- **Multi-Agent AI Architecture**: Implements a sophisticated 3-agent pipeline (Creator Agent, Reviewer Agent, Solver Agent) that dramatically reduces hallucinations and ensures exam questions strictly adhere to constraints, complexity, and factuality.
+- **Polished & Mobile-Responsive UI**: A highly polished, aesthetically modern interface built with Tailwind CSS, featuring smooth micro-interactions, robust empty states, responsive sidebars, and full mobile compatibility across all views.
+- **Robust Background Processing (BullMQ)**: Uses Redis and BullMQ to handle long-running AI generation jobs asynchronously, ensuring the Express server remains non-blocking and highly scalable.
+- **Real-time WebSockets**: Provides a seamless live progress overlay that updates the user with exact AI generation stages (Creator -> Reviewer -> Solver) via Socket.io.
+- **Iterative AI Refinement**: The "Review" feature acts as a Refiner Agent, allowing teachers to provide natural language feedback to rewrite, modify, or delete specific questions without regenerating the entire paper.
+- **File Management & Context Ingestion**: Upload syllabus PDFs or TXT documents which are parsed natively using `pdf-parse` and passed as context material to the AI to ground the assessment in course material.
+- **Authentication & Personalization**: Localized Settings page with profile avatar uploads and school customization that persists robustly with intelligent LocalStorage failovers.
+- **PDF Export Engine**: Download generated assessments as cleanly formatted, print-ready PDFs dynamically generated on the backend via `pdfkit` (not just raw browser printing).
+- **Advanced State Management**: Built using Zustand for centralized, prop-drilling-free frontend state, optimizing React rendering.
+- **Dynamic Analytics Dashboard**: Visualizes assessment generation trends with beautiful Recharts data visualizations and real-time computation of generated question marks.
 
 ---
 

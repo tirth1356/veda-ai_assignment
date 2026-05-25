@@ -156,9 +156,9 @@ export default function Dashboard() {
       {/* Greetings Block */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
+          <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
           <h1 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-2">
-            Hi {userName} <span className="animate-bounce">👋</span>
+            Hi {userName} <span>👋</span>
           </h1>
         </div>
         <p className="text-xs text-gray-400">Welcome Back, Ready to create your next assignment?</p>
