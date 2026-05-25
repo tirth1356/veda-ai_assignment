@@ -60,30 +60,6 @@ export default function CreateAssignment() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewAssignment, setPreviewAssignment] = useState<IAssignment | null>(null);
 
-  // Sync Fallback Recovery States
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  // Monitor progress updates; if stuck on PENDING, show fallback button after 4s
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    return () => clearTimeout(timer);
-  }, [step, generationProgress]);
-
-  const handleTriggerSync = async () => {
-    if (!assignmentId) return;
-    setIsSyncing(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/generate-sync`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Sync generation request failed');
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to trigger synchronous fallback. Ensure the server is online.', 'error');
-      setIsSyncing(false);
-    }
-  };
-
 
   // Form Fields
   const [title, setTitle] = useState('Quiz on Electricity');
@@ -839,29 +815,69 @@ export default function CreateAssignment() {
       {step === 2 && (
         <div className="bg-white border border-gray-100 rounded-3xl p-12 shadow-sm flex flex-col items-center justify-center min-h-[50vh] text-center space-y-6">
           {(!generationProgress || generationProgress.status === 'PENDING' || generationProgress.status === 'PROCESSING') && (
-            <>
-              <div className="relative w-24 h-24 flex items-center justify-center">
-                {/* Rotating background circular rings */}
-                <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
-                <span className="text-sm font-black text-gray-700">
+            <div className="flex flex-col items-center gap-8 w-full max-w-sm">
+              {/* Animated brain / multi-ring spinner */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                {/* Outer slow ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-orange-100"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-orange-400 border-t-transparent animate-spin" style={{animationDuration:'1.4s'}}></div>
+                {/* Middle counter ring */}
+                <div className="absolute inset-2 rounded-full border-4 border-orange-200 border-b-transparent animate-spin" style={{animationDuration:'1s', animationDirection:'reverse'}}></div>
+                {/* Inner fast ring */}
+                <div className="absolute inset-4 rounded-full border-4 border-orange-500 border-t-transparent border-r-transparent animate-spin" style={{animationDuration:'0.6s'}}></div>
+                {/* Center percent */}
+                <span className="text-base font-black text-gray-800 z-10">
                   {generationProgress?.progress || 0}%
                 </span>
               </div>
-              
-              <div className="space-y-1">
-                <h3 className="font-extrabold text-lg text-gray-800">Generating Questions</h3>
-                <p className="text-xs text-orange-500 animate-pulse font-bold tracking-wide uppercase">
-                  {generationProgress?.message || 'Queuing task...'}
+
+              {/* Agent label */}
+              <div className="text-center space-y-2">
+                <h3 className="font-extrabold text-xl text-gray-800">Generating Your Paper</h3>
+                <p className="text-xs font-bold text-orange-500 animate-pulse tracking-widest uppercase">
+                  {generationProgress?.message || 'Connecting to AI pipeline...'}
                 </p>
               </div>
 
-              <p className="text-gray-400 text-xs max-w-sm leading-relaxed">
-                Our background worker is analyzing your details, reading source material, and prompting the AI to structure a professional question paper.
-              </p>
-
-
-            </>
+              {/* Agent step pills */}
+              <div className="flex flex-col gap-2 w-full">
+                {[
+                  { label: 'RAG Agent', sub: 'Extracting relevant context', min: 5, max: 15 },
+                  { label: 'Creator Agent', sub: 'Drafting question paper', min: 15, max: 45 },
+                  { label: 'Validation Agent', sub: 'Checking counts & marks', min: 40, max: 55 },
+                  { label: 'Reviewer Agent', sub: 'Quality & phrasing check', min: 55, max: 78 },
+                  { label: 'Solver Agent', sub: 'Generating answer key', min: 75, max: 95 },
+                ].map((agent) => {
+                  const p = generationProgress?.progress || 0;
+                  const done = p > agent.max;
+                  const active = p >= agent.min && p <= agent.max;
+                  return (
+                    <div
+                      key={agent.label}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-500 ${
+                        done
+                          ? 'bg-green-50 border-green-200'
+                          : active
+                          ? 'bg-orange-50 border-orange-300 shadow-sm'
+                          : 'bg-gray-50 border-gray-100'
+                      }`}
+                    >
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        done ? 'bg-green-400' : active ? 'bg-orange-500 animate-pulse' : 'bg-gray-300'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[11px] font-bold ${
+                          done ? 'text-green-700' : active ? 'text-orange-700' : 'text-gray-400'
+                        }`}>{agent.label}</p>
+                        <p className="text-[10px] text-gray-400 truncate">{agent.sub}</p>
+                      </div>
+                      {done && <span className="text-green-500 text-xs font-black">✓</span>}
+                      {active && <Loader2 className="w-3 h-3 text-orange-500 animate-spin flex-shrink-0" />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
 
