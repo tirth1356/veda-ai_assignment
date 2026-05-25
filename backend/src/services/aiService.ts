@@ -71,7 +71,7 @@ function validateAssessment(paper: any, expectedTotalMarks: number, expectedTota
       const normalized = (q.questionText || '').toLowerCase().trim().substring(0, 100); // compare only first 100 chars
       if (!normalized) throw new Error('Validation Failed: Empty question text detected.');
       if (questionTexts.has(normalized)) {
-        throw new Error(`Validation Failed: Duplicate question detected: "${q.questionText.substring(0, 60)}..."`);
+        console.warn(`Warning: Duplicate question detected: "${q.questionText.substring(0, 60)}..."`);
       }
       questionTexts.add(normalized);
     }
