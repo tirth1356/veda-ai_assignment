@@ -94,7 +94,7 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
             </div>
             {/* Custom Footer */}
             <footer className="mt-12 py-6 border-t border-gray-200 text-center text-xs text-gray-500 font-medium">
-              Made with ❤️ by <a href="https://github.com/tirth1356" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">Tirth</a>. 
+              Made with ❤️ by <span className="text-orange-500 font-bold transition-colors">Tirth</span>. 
               Check out my <a href="https://tirth1356.vercel.app" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">Portfolio</a> & <a href="https://github.com/tirth1356" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">GitHub</a>.
             </footer>
           </main>

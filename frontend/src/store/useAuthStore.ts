@@ -41,6 +41,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('veda_user_name');
     localStorage.removeItem('veda_user_email');
     set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   },
 
   checkAuth: async () => {
