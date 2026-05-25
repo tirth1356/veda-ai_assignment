@@ -5,7 +5,7 @@
 
 export interface Question {
   questionText: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficulty: 'Easy' | 'Moderate' | 'Challenging';
   marks: number;
   questionNumber?: number;
 }
@@ -148,10 +148,10 @@ export const validateAssignment = (assignment: any): ValidationError[] => {
             });
           }
 
-          if (!['Easy', 'Medium', 'Hard'].includes(q.difficulty)) {
+          if (!['Easy', 'Moderate', 'Challenging'].includes(q.difficulty)) {
             errors.push({
               field: `sections[${sIndex}].questions[${qIndex}].difficulty`,
-              message: 'Difficulty must be Easy, Medium, or Hard',
+              message: 'Difficulty must be Easy, Moderate, or Challenging',
               value: q.difficulty,
             });
           }
@@ -217,17 +217,17 @@ export const validateAssignment = (assignment: any): ValidationError[] => {
  */
 export const normalizeAssignment = (assignment: any): IAssignment => {
   return {
-    schoolName: (assignment.schoolName || '').trim(),
-    subject: (assignment.subject || '').trim(),
-    className: (assignment.className || '').trim(),
-    timeAllowed: (assignment.timeAllowed || '').trim(),
+    schoolName: (assignment.schoolName || 'Educational Institution').trim(),
+    subject: (assignment.subject || 'General').trim(),
+    className: (assignment.className || 'General Class').trim(),
+    timeAllowed: (assignment.timeAllowed || '60 minutes').trim(),
     totalMarks: Math.max(0, Number(assignment.totalMarks) || 0),
     sections: (assignment.sections || []).map((section: any, sIdx: number) => ({
       title: (section.title || '').trim(),
       instruction: (section.instruction || '').trim(),
       questions: (section.questions || []).map((q: any, qIdx: number) => ({
         questionText: (q.questionText || '').trim(),
-        difficulty: q.difficulty || 'Medium',
+        difficulty: q.difficulty || 'Moderate',
         marks: Math.max(0.5, Number(q.marks) || 1),
         questionNumber: sIdx * 100 + qIdx + 1, // Auto-generate if missing
       })),
