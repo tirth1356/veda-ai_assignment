@@ -95,8 +95,8 @@ export const initWorker = (): Worker => {
         }, (message, progress) => {
           // Callback to update DB and emit real-time updates for each agent state
           Assignment.updateOne(
-            { _id: assignmentId },
-            { $set: { status: 'PROCESSING', progress } }
+            { _id: assignmentId, status: 'PROCESSING' },
+            { $set: { progress } }
           ).catch((err: any) => console.error('Error saving progression state:', err));
           
           emitAssignmentProgress(assignmentId, {
