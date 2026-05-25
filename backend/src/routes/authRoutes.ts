@@ -85,8 +85,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        schoolName: '',
-        schoolCity: ''
+        schoolName: user.schoolName || '',
+        schoolCity: user.schoolCity || ''
       },
     });
   } catch (error) {
@@ -118,6 +118,8 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        schoolName: user.schoolName || '',
+        schoolCity: user.schoolCity || ''
       }
     });
   } catch (error) {
