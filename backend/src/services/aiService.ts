@@ -110,8 +110,8 @@ export const generateAssessmentPaper = async (
   // Mini-RAG: only extract context if reference text provided
   let injectedContext = '';
   if (params.referenceText) {
-    const topChunks = chunkAndRetrieveContext(params.referenceText, params.title, params.subject || '');
-    injectedContext = `\n---\nREFERENCE MATERIAL (use to base questions on):\n${topChunks}\n---`;
+    const topChunks = chunkAndRetrieveContext(params.referenceText, params.title, params.subject || '', 2);
+    injectedContext = `\nCONTEXT:\n${topChunks}`;
   }
 
   // Difficulty instruction
@@ -148,7 +148,7 @@ Do not include markdown, explanations, or extra keys.`,
       ],
       response_format: { type: 'json_object' },
       temperature: 0.4,
-      max_tokens: 6000,
+      max_tokens: 3000,
     });
 
     const refinedText = refinerResponse.choices[0]?.message?.content || '';
@@ -202,13 +202,13 @@ ${injectedContext}`;
           {
             role: 'user',
             content: creatorUserPrompt + (lastValidationError
-              ? `\n\n⚠️ PREVIOUS ATTEMPT FAILED: ${lastValidationError}. Fix this now.`
+              ? `\nFIX: ${lastValidationError.substring(0, 120)}`
               : ''),
           },
         ],
         response_format: { type: 'json_object' },
         temperature: 0.3 + (attempts * 0.1),
-        max_tokens: 8000,
+        max_tokens: 3500,
       });
 
       const draftText = creatorResponse.choices[0]?.message?.content || '';
@@ -266,7 +266,7 @@ Output the corrected JSON with the same schema. No markdown.`,
         ],
         response_format: { type: 'json_object' },
         temperature: 0.2,
-        max_tokens: 8000,
+        max_tokens: 3500,
       });
 
       const reviewedText = reviewerResponse.choices[0]?.message?.content || '';
@@ -311,7 +311,7 @@ No markdown, no extra keys.`,
       ],
       response_format: { type: 'json_object' },
       temperature: 0.2,
-      max_tokens: 4000,
+      max_tokens: 2500,
     });
 
     const solvedText = solverResponse.choices[0]?.message?.content || '';
