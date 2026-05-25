@@ -102,7 +102,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-50 gap-3">
+      <div className="w-full flex flex-col items-center justify-center h-screen bg-gray-50 gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
         <p className="text-gray-500 font-medium">Checking secure session...</p>
       </div>

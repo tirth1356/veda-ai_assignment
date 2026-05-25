@@ -81,9 +81,9 @@ export default function AssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <div className="w-full flex flex-col items-center justify-center h-64 gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
-        <p className="text-gray-500 font-medium">Loading assignments list...</p>
+        <p className="text-gray-500 font-bold text-sm animate-pulse">Loading your assignments...</p>
       </div>
     );
   }

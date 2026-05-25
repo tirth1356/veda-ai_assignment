@@ -88,8 +88,15 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col h-screen overflow-hidden pb-[72px] lg:pb-0">
           <Header onToggleMobileMenu={() => setMobileMenuOpen(true)} />
-          <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-8 relative">
-            {children}
+          <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-8 relative flex flex-col">
+            <div className="flex-1 min-h-full">
+              {children}
+            </div>
+            {/* Custom Footer */}
+            <footer className="mt-12 py-6 border-t border-gray-200 text-center text-xs text-gray-500 font-medium">
+              Made with ❤️ by <a href="https://github.com/tirth1356" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">Tirth</a>. 
+              Check out my <a href="https://tirth1356.vercel.app" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">Portfolio</a> & <a href="https://github.com/tirth1356" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 font-bold transition-colors">GitHub</a>.
+            </footer>
           </main>
         </div>
 
