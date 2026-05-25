@@ -61,20 +61,11 @@ export default function CreateAssignment() {
   const [previewAssignment, setPreviewAssignment] = useState<IAssignment | null>(null);
 
   // Sync Fallback Recovery States
-  const [showSyncFallback, setShowSyncFallback] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Monitor progress updates; if stuck on PENDING, show fallback button after 4s
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (step === 2 && (!generationProgress || generationProgress.status === 'PENDING')) {
-      timer = setTimeout(() => {
-        setShowSyncFallback(true);
-      }, 4000);
-    } else {
-      setShowSyncFallback(false);
-      setIsSyncing(false);
-    }
     return () => clearTimeout(timer);
   }, [step, generationProgress]);
 
@@ -869,28 +860,7 @@ export default function CreateAssignment() {
                 Our background worker is analyzing your details, reading source material, and prompting the AI to structure a professional question paper.
               </p>
 
-              {showSyncFallback && (
-                <div className="mt-6 flex flex-col items-center p-4 bg-orange-50/70 border border-orange-100 rounded-2xl max-w-xs animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <p className="text-[10px] text-orange-600 font-bold leading-relaxed text-center">
-                    Queue taking too long? Click below to bypass the background worker and run generation synchronously.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleTriggerSync}
-                    disabled={isSyncing}
-                    className="mt-3 w-full py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
-                  >
-                    {isSyncing ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <span>Generate Synchronously</span>
-                    )}
-                  </button>
-                </div>
-              )}
+
             </>
           )}
 

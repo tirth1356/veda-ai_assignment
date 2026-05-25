@@ -451,9 +451,10 @@ export const runSyncGeneration = async (assignmentId: string): Promise<void> => 
         : undefined,
     }, (message, progress) => {
       // Forward progress events in real-time
-      assignment.status = 'PROCESSING';
-      assignment.progress = progress;
-      assignment.save().catch((err: any) => console.error('Error saving sync progression state:', err));
+      Assignment.updateOne(
+        { _id: assignmentId },
+        { $set: { status: 'PROCESSING', progress } }
+      ).catch((err: any) => console.error('Error saving sync progression state:', err));
 
       emitAssignmentProgress(assignmentId, {
         status: 'PROCESSING',
