@@ -86,7 +86,7 @@ export interface PDFGenerationResult {
   generatedAt: Date;
 }
 
-export interface ValidationError {
+export interface IValidationError {
   field: string;
   message: string;
   value?: any;
@@ -202,8 +202,8 @@ const PDF_LIMITS = {
 // VALIDATION
 // ============================================================================
 
-function validateAssignment(assignment: any): ValidationError[] {
-  const errors: ValidationError[] = [];
+function validateAssignment(assignment: any): IValidationError[] {
+  const errors: IValidationError[] = [];
 
   if (!assignment || typeof assignment !== 'object') {
     return [{ field: 'assignment', message: 'Assignment must be a valid object' }];
@@ -368,7 +368,7 @@ function normalizeAssignment(assignment: any): IAssignment {
 // ============================================================================
 
 class PDFLayoutHelper {
-  constructor(private doc: PDFDocument, private config: PDFConfig) {}
+  constructor(private doc: typeof PDFDocument, private config: PDFConfig) {}
 
   drawDivider(
     strokeColor: string = this.config.colors.divider,
@@ -709,7 +709,7 @@ export class AssignmentPDFGenerator {
   }
 
   private renderPDF(
-    doc: PDFDocument,
+    doc: typeof PDFDocument,
     assignment: IAssignment,
     options: PDFGenerationOptions
   ): void {
@@ -758,7 +758,7 @@ export class AssignmentPDFGenerator {
   }
 
   private renderQuestions(
-    doc: PDFDocument,
+    doc: typeof PDFDocument,
     helper: PDFLayoutHelper,
     assignment: IAssignment
   ): void {
@@ -789,7 +789,7 @@ export class AssignmentPDFGenerator {
   }
 
   private renderAnswerKey(
-    doc: PDFDocument,
+    doc: typeof PDFDocument,
     helper: PDFLayoutHelper,
     answerKey: Array<{ questionNumber: number; answerText: string }>
   ): void {
@@ -800,7 +800,7 @@ export class AssignmentPDFGenerator {
     });
   }
 
-  private addFooters(doc: PDFDocument, assignment: IAssignment): void {
+  private addFooters(doc: typeof PDFDocument, assignment: IAssignment): void {
     const range = doc.bufferedPageRange();
 
     for (let i = range.start; i < range.start + range.count; i++) {
