@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import Assignment from '../models/Assignment';
 import { addAssignmentGenerationJob } from '../queues/queue';
-import { generateAssignmentPDFBuffer } from '../services/assignment-pdf-generator';
+import { generateAssignmentPDFBuffer } from '../services/assignment-pdf';
 import { redisClient } from '../config/redis';
 import { generateAssessmentPaper } from '../services/aiService';
 import { emitAssignmentProgress } from '../config/socket';
