@@ -16,43 +16,30 @@ VedaAI is a full-stack AI-powered assessment generator application built based o
 ## ⭐ Bonus Features
 - **Review & Refinement Workflow**  
   Teachers can preview, edit, regenerate, or refine questions before exporting the final paper.
-
 - **Multi-Agent AI Pipeline**  
   Creator, Reviewer, and Solver agents collaboratively generate, validate, and refine assessments.
-
 - **Difficulty Distribution Control**  
   Configure exact Easy / Medium / Hard ratios enforced during AI generation.
-
 - **AI Output Validation Layer**  
   Automatically validates marks, question counts, duplicates, and section consistency before saving.
-
 - **Hallucination Detection (Solver Agent)**  
   Secondary AI verification layer detects incorrect or inconsistent generated answers.
-
 - **Real-time WebSockets & BullMQ Queues**  
   Live generation progress updates powered by Socket.io, Redis, and BullMQ.
-
 - **Context Chunking + Retrieval (Mini-RAG)**  
   Uploaded PDFs are chunked and only the most relevant context is injected into prompts.
-
 - **Polished Responsive UI**  
   Modern Tailwind UI with responsive layouts, smooth animations, and optimized mobile support.
-
 - **Auto Save Drafts**  
   Form state is automatically persisted locally to prevent accidental data loss.
-
 - **Skeleton Loaders & Micro-interactions**  
   Dynamic loading states and transitions for a premium user experience.
-
 - **Advanced State Management**  
   Centralized Zustand store architecture for scalable and optimized frontend state handling.
-
 - **Analytics Dashboard**  
   Visualizes generation statistics and assessment metrics using Recharts.
-
 - **Authentication & Personalization**  
   User settings, profile customization, and persistent local preferences support.
-
 - **Real Exam PDF Layout**  
   A4-optimized PDF export with proper page breaks, headers, footers, and print-ready formatting.
 ---
