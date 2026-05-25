@@ -80,21 +80,21 @@ export const initWorker = (): Worker => {
           className: assignment.className,
           subject: assignment.subject,
           difficulty: assignment.difficulty,
-          questionTypes: assignment.questionTypes.map((qt) => ({
+          questionTypes: assignment.questionTypes.map((qt: any) => ({
             type: qt.type,
             count: qt.count,
             marks: qt.marks,
           })),
           additionalInstructions: assignment.additionalInstructions,
           referenceText: referenceText || undefined,
-          existingPaper: assignment.sections && assignment.sections.length > 0 
+          existingPaper: assignment.sections && assignment.sections.length > 0 && assignment.sections.some((s: any) => s.questions && s.questions.length > 0)
             ? { sections: assignment.sections, answerKey: assignment.answerKey }
             : undefined,
         }, (message, progress) => {
           // Callback to update DB and emit real-time updates for each agent state
           assignment.status = 'PROCESSING';
           assignment.progress = progress;
-          assignment.save().catch(err => console.error('Error saving progression state:', err));
+          assignment.save().catch((err: any) => console.error('Error saving progression state:', err));
           
           emitAssignmentProgress(assignmentId, {
             status: 'PROCESSING',

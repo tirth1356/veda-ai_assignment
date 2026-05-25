@@ -439,21 +439,21 @@ export const runSyncGeneration = async (assignmentId: string): Promise<void> => 
       title: assignment.title,
       className: assignment.className,
       subject: assignment.subject,
-      questionTypes: assignment.questionTypes.map((qt) => ({
+      questionTypes: assignment.questionTypes.map((qt: any) => ({
         type: qt.type,
         count: qt.count,
         marks: qt.marks,
       })),
       additionalInstructions: assignment.additionalInstructions,
       referenceText: referenceText || undefined,
-      existingPaper: assignment.sections && assignment.sections.length > 0 
+      existingPaper: assignment.sections && assignment.sections.length > 0 && assignment.sections.some((s: any) => s.questions && s.questions.length > 0)
         ? { sections: assignment.sections, answerKey: assignment.answerKey }
         : undefined,
     }, (message, progress) => {
       // Forward progress events in real-time
       assignment.status = 'PROCESSING';
       assignment.progress = progress;
-      assignment.save().catch(err => console.error('Sync progress save failed:', err));
+      assignment.save().catch((err: any) => console.error('Error saving sync progression state:', err));
 
       emitAssignmentProgress(assignmentId, {
         status: 'PROCESSING',
