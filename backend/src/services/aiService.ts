@@ -173,7 +173,7 @@ RULES:
 2. Group questions logically into SEPARATE sections based on their question type (e.g., Multiple Choice in one section, Short Answer in another).
 3. Every question must be completely unique — no duplicates or near-duplicates.
 4. For Multiple Choice Questions: embed all 4 options (A) (B) (C) (D) directly inside questionText.
-5. Do NOT reference graphs, images, or visual diagrams. All questions must be text-only.
+5. NEVER ask students to examine or refer to an existing graph, image, or diagram (e.g., "Examine the graph below"). Since there are no images in the paper, if a question involves graphs or diagrams, you MUST ask the student to DRAW or CREATE it.
 6. If the topic is too vague or meaningless, output {"error": "Topic too vague to generate valid questions."}.
 
 JSON Schema:
@@ -264,7 +264,7 @@ ${injectedContext}`;
           {
             role: 'system',
             content: `You are a Reviewer Agent. Fix issues in this exam paper:
-1. If any question references a graph/figure/image/diagram, rewrite it as a pure text question.
+1. REWRITE any question that asks the student to refer to a provided graph, image, or diagram (e.g. "Examine the graph"). Change it so it asks the student to DRAW or CREATE the graph/diagram instead.
 2. If any MCQ question is missing options, add (A) (B) (C) (D) options inside the questionText.
 3. Do NOT change question counts, marks, or structure.
 Output the corrected JSON with the same schema. No markdown.`,
