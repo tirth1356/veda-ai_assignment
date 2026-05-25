@@ -460,8 +460,7 @@ export default function CreateAssignment() {
             1
           </div>
           <span className="text-[10px] md:text-xs font-semibold text-gray-700 leading-tight">
-            <span className="md:hidden">Upload</span>
-            <span className="hidden md:inline">Upload Material & Setup Form</span>
+            <span>Upload</span>
           </span>
         </div>
         <div className="flex-1 h-0.5 bg-gray-100 mx-2 md:mx-6">
@@ -474,8 +473,7 @@ export default function CreateAssignment() {
             2
           </div>
           <span className="text-[10px] md:text-xs font-semibold text-gray-400 leading-tight">
-            <span className="md:hidden">Generation</span>
-            <span className="hidden md:inline">AI Generation Workflow</span>
+            <span>Generated</span>
           </span>
         </div>
       </div>
