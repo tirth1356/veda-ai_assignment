@@ -59,30 +59,30 @@ const QuestionSchema = new Schema<IQuestion>({
   difficulty: { type: String, required: true },
   marks: { type: Number, required: true },
   svgDiagram: { type: String }
-});
+}, { _id: false });
 
 const SectionSchema = new Schema<ISection>({
   title: { type: String, required: true },
   instruction: { type: String, required: true },
-  questions: [QuestionSchema]
-});
+  questions: { type: [QuestionSchema], default: [] }
+}, { _id: false });
 
 const AnswerKeyItemSchema = new Schema<IAnswerKeyItem>({
   questionNumber: { type: Number, required: true },
   answerText: { type: String, required: true }
-});
+}, { _id: false });
 
 const QuestionTypeConfigSchema = new Schema<IQuestionTypeConfig>({
   type: { type: String, required: true },
   count: { type: Number, required: true },
   marks: { type: Number, required: true }
-});
+}, { _id: false });
 
 const AssignmentSchema = new Schema<IAssignment>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true, default: 'Assignment' },
   dueDate: { type: Date, required: true },
-  questionTypes: [QuestionTypeConfigSchema],
+  questionTypes: { type: [QuestionTypeConfigSchema], default: [] },
   additionalInstructions: { type: String },
   filePath: { type: String },
   originalFileName: { type: String },
@@ -95,7 +95,7 @@ const AssignmentSchema = new Schema<IAssignment>({
     default: 'PENDING',
     required: true 
   },
-  progress: { type: Number, default: 0, required: true },
+  progress: { type: Number, min: 0, max: 100, default: 0, required: true },
   error: { type: String },
 
   schoolName: { type: String, default: 'Delhi Public School, Sector-4, Bokaro' },
@@ -104,10 +104,10 @@ const AssignmentSchema = new Schema<IAssignment>({
   timeAllowed: { type: String, default: '45 minutes' },
   difficulty: { type: String, default: 'Mixed' },
 
-  sections: [SectionSchema],
-  answerKey: [AnswerKeyItemSchema]
+  sections: { type: [SectionSchema], default: [] },
+  answerKey: { type: [AnswerKeyItemSchema], default: [] }
 }, {
   timestamps: true
 });
 
-export default mongoose.model<IAssignment>('Assignment', AssignmentSchema);
+export default mongoose.models.Assignment || mongoose.model<IAssignment>('Assignment', AssignmentSchema);
