@@ -70,7 +70,7 @@ Output JSON schema:
           "questionText": "Clear and specific question",
           "difficulty": "Easy" | "Moderate" | "Challenging",
           "marks": number,
-      "studentInstruction": "Ask the student to draw the required diagram or graph and explain the relevant theory or calculations in their answer. Provide clear guidance in the question text without supplying any image or SVG."
+          "studentInstruction": "Optional instructions for the student. Do NOT ask the student to look at or reference any provided graphs, figures, or images, as none can be provided in this text-only format."
         }
       ]
     }
@@ -82,7 +82,7 @@ Guidelines:
 2. Adjust the cognitive complexity, mathematical rigor, vocabulary, and depth to be appropriate for the requested target grade level.
 3. Distribute difficulty levels relative to that grade: 'Easy', 'Moderate', and 'Challenging'.
 4. If reference material is provided, create questions directly testing that content.
-5. CRITICAL: Do NOT generate any questions that rely on images, graphs, or visual diagrams being shown to the student (e.g., never generate questions starting with "Identify the graph shown below"). This platform only supports text.`;
+5. CRITICAL: Do NOT generate any questions that rely on images, graphs, figures, or visual diagrams being shown to the student (e.g., never generate questions starting with "Identify the graph shown below", "In the figure given", or "What is the value of x in the graph"). Assume the student only has plain text.`;
 
   const creatorUserPrompt = `Draft an assessment for:
 Topic: "${params.title}"
@@ -224,7 +224,8 @@ Your assessment criteria:
 1. Verify question count: Does it match the user requirement?
 2. Verify marks: Does each question match the specified mark?
 3. Grammar and Factual Correctness: Fix any ambiguous or factual errors.
-4. If correct, return it unchanged. If incorrect, correct it and return the corrected JSON.`;
+4. ABSOLUTE CRITICAL CHECK: Read every single question. If ANY question references a graph, figure, image, or visual diagram (e.g., "in the graph below", "the figure shows"), you MUST rewrite the question to be a pure text-based conceptual or mathematical problem, or replace it entirely with a valid question of the same topic and difficulty.
+5. If correct, return it unchanged. If incorrect or violating rule 4, correct it and return the corrected JSON.`;
 
   const reviewerUserPrompt = `User Requirements:
 ${questionTypesDesc}
