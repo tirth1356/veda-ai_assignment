@@ -38,6 +38,8 @@ const QUESTION_TYPE_OPTIONS = [
 ];
 
 export default function CreateAssignment() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const assignmentIdParam = searchParams.get('id');
@@ -80,7 +82,7 @@ export default function CreateAssignment() {
     if (!assignmentId) return;
     setIsSyncing(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/assignments/${assignmentId}/generate-sync`, {
+      const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/generate-sync`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Sync generation request failed');

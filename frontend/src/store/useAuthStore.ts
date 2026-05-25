@@ -42,6 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('veda_user_email');
     localStorage.removeItem('veda_school_name');
     localStorage.removeItem('veda_school_city');
+    localStorage.removeItem('veda_draft_assignment');
     
     if (typeof window !== 'undefined') {
       window.location.href = '/';
