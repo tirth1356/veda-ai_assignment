@@ -79,9 +79,10 @@ Output JSON schema:
 
 Guidelines:
 1. Strictly respect the requested question types, counts, and marks.
-2. Adjust the cognitive complexity, mathematical rigor, vocabulary, and depth to be appropriate for the requested target grade level (e.g., LKG/UKG should be extremely simple/conceptual, Grades 1-12 should be curriculum-aligned, and University should be highly advanced).
+2. Adjust the cognitive complexity, mathematical rigor, vocabulary, and depth to be appropriate for the requested target grade level.
 3. Distribute difficulty levels relative to that grade: 'Easy', 'Moderate', and 'Challenging'.
-4. If reference material is provided, create questions directly testing that content.`;
+4. If reference material is provided, create questions directly testing that content.
+5. CRITICAL: Do NOT generate any questions that rely on images, graphs, or visual diagrams being shown to the student (e.g., never generate questions starting with "Identify the graph shown below"). This platform only supports text.`;
 
   const creatorUserPrompt = `Draft an assessment for:
 Topic: "${params.title}"
@@ -137,6 +138,7 @@ Output a JSON object with this exact structure:
   ]
 }
 Maintain the JSON schema perfectly. Preserve any questions that the user did not ask to change.
+CRITICAL INSTRUCTION: If the user asks to remove or delete a specific question, you MUST ONLY remove that single question from the "questions" array. Do NOT delete the entire section. 
 CRITICAL INSTRUCTION: If you replace or modify a question, you MUST accurately rewrite the corresponding answer inside the "answerKey" array to match the new question. Do not leave the old answer.`;
 
     const refinerUserPrompt = `
