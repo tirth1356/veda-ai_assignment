@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAssignmentStore } from '../../store/useAssignmentStore';
 import { useToastStore } from '../../store/useToastStore';
+import { AssignmentCardSkeleton } from '../../components/Skeleton';
 
 const EmptyStateGraphic = () => (
   <div className="relative w-56 h-56 mx-auto flex items-center justify-center">
