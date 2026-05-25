@@ -43,6 +43,10 @@ VedaAI is a full-stack AI-powered assessment generator application built based o
 - **Real Exam PDF Layout**  
   A4-optimized PDF export with proper page breaks, headers, footers, and print-ready formatting.
 ---
+<img width="1918" height="909" alt="image" src="https://github.com/user-attachments/assets/398c59e8-38ce-4824-85a8-79eeed21b39d" />
+<img width="1343" height="901" alt="image" src="https://github.com/user-attachments/assets/33797807-0dc2-4ccc-a433-8154ac930289" />
+<img width="1919" height="898" alt="image" src="https://github.com/user-attachments/assets/7fb392e2-1988-44fb-923e-57a7f4c9b15c" />
+
 
 ## 🏗️ Architecture Overview & Approach
 
