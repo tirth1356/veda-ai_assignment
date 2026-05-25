@@ -47,7 +47,10 @@ export default function GroupDetailsPage() {
     setIsModalOpen(true);
     setIsFetchingAssignments(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/assignments`);
+      const token = localStorage.getItem('veda_token');
+      const res = await fetch(`${API_BASE_URL}/assignments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error('Failed to fetch assignments');
       const data = await res.json();
       setAllAssignments(data);
@@ -75,8 +78,10 @@ export default function GroupDetailsPage() {
   const handleRemoveAssignment = async (assignmentId: string) => {
     if (!confirm('Are you sure you want to remove this assignment from the group?')) return;
     try {
+      const token = localStorage.getItem('veda_token');
       const res = await fetch(`${API_BASE_URL}/groups/${groupId}/assignments/${assignmentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to remove assignment');
       showToast('Assignment removed from group', 'success');
