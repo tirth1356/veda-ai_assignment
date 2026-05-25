@@ -169,7 +169,7 @@ export default function Dashboard() {
         
         {/* Card 1: Recharts Overview */}
         <div className="col-span-1 md:col-span-2">
-          <DashboardCharts data={[]} />
+          <DashboardCharts data={assignments} />
         </div>
 
         {/* Card 2: Average Difficulty (New) */}

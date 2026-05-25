@@ -14,16 +14,35 @@ interface ChartProps {
 }
 
 export default function DashboardCharts({ data }: ChartProps) {
-  // If no data, use some nice looking mock data for the chart to show
-  const chartData = data && data.length > 0 ? data : [
-    { name: 'Mon', count: 1 },
-    { name: 'Tue', count: 2 },
-    { name: 'Wed', count: 1 },
-    { name: 'Thu', count: 4 },
-    { name: 'Fri', count: 2 },
-    { name: 'Sat', count: 5 },
-    { name: 'Sun', count: 3 },
-  ];
+  const chartData = React.useMemo(() => {
+    if (data && data.length > 0) {
+      const computedData = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const name = d.toLocaleDateString('en-US', { weekday: 'short' });
+        
+        const count = data.filter(a => {
+          if (!a.createdAt) return false;
+          const aDate = new Date(a.createdAt);
+          return aDate.toDateString() === d.toDateString();
+        }).length;
+        
+        computedData.push({ name, count });
+      }
+      return computedData;
+    }
+
+    return [
+      { name: 'Mon', count: 1 },
+      { name: 'Tue', count: 2 },
+      { name: 'Wed', count: 1 },
+      { name: 'Thu', count: 4 },
+      { name: 'Fri', count: 2 },
+      { name: 'Sat', count: 5 },
+      { name: 'Sun', count: 3 },
+    ];
+  }, [data]);
 
   return (
     <div className="w-full h-64 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col">

@@ -97,6 +97,22 @@ export const initWorker = (): Worker => {
         assignment.answerKey = aiResult.answerKey;
         // Do not overwrite subject, className, or timeAllowed to preserve teacher's input
         
+        // Dynamically recalculate total marks and questions
+        let newTotalQuestions = 0;
+        let newTotalMarks = 0;
+        if (aiResult.sections && Array.isArray(aiResult.sections)) {
+          aiResult.sections.forEach((sec: any) => {
+            if (sec.questions && Array.isArray(sec.questions)) {
+              newTotalQuestions += sec.questions.length;
+              sec.questions.forEach((q: any) => {
+                newTotalMarks += (Number(q.marks) || 0);
+              });
+            }
+          });
+        }
+        assignment.totalQuestions = newTotalQuestions;
+        assignment.totalMarks = newTotalMarks;
+
         assignment.markModified('sections');
         assignment.markModified('answerKey');
         
