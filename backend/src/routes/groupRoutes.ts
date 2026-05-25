@@ -1,8 +1,11 @@
 import { Router, Request, Response } from 'express';
 import Group from '../models/Group';
 import Assignment from '../models/Assignment';
+import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
+router.use(protect);
+
 
 /**
  * @route   POST /api/groups
@@ -17,6 +20,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     }
 
     const newGroup = new Group({
+      user: (req as any).user.id,
       name,
       className,
       subject,
@@ -38,7 +42,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     // We populate assignments to get the count or details if needed
-    const groups = await Group.find().populate('assignments', 'title _id status').sort({ createdAt: -1 });
+    const groups = await Group.find({ user: (req as any).user.id })
+      .populate('assignments', 'title _id status')
+      .sort({ createdAt: -1 });
     res.json(groups);
   } catch (error) {
     console.error('Error fetching groups:', error);
@@ -52,9 +58,10 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
  */
 router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const group = await Group.findById(req.params.id).populate('assignments', 'title subject className status createdAt totalMarks totalQuestions difficulty');
+    const group = await Group.findOne({ _id: req.params.id, user: (req as any).user.id })
+      .populate('assignments', 'title subject className status createdAt totalMarks totalQuestions difficulty');
     if (!group) {
-      res.status(404).json({ error: 'Group not found.' });
+      res.status(404).json({ error: 'Group not found or unauthorized.' });
       return;
     }
     res.json(group);
@@ -76,9 +83,9 @@ router.post('/:id/assignments', async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const group = await Group.findById(req.params.id);
+    const group = await Group.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!group) {
-      res.status(404).json({ error: 'Group not found.' });
+      res.status(404).json({ error: 'Group not found or unauthorized.' });
       return;
     }
 
@@ -108,9 +115,9 @@ router.post('/:id/assignments', async (req: Request, res: Response): Promise<voi
  */
 router.delete('/:id/assignments/:assignmentId', async (req: Request, res: Response): Promise<void> => {
   try {
-    const group = await Group.findById(req.params.id);
+    const group = await Group.findOne({ _id: req.params.id, user: (req as any).user.id });
     if (!group) {
-      res.status(404).json({ error: 'Group not found.' });
+      res.status(404).json({ error: 'Group not found or unauthorized.' });
       return;
     }
 

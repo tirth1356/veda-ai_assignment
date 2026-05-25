@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IGroup extends Document {
+  user: mongoose.Types.ObjectId;
   name: string;
   className: string;
   subject: string;
@@ -10,6 +11,7 @@ export interface IGroup extends Document {
 }
 
 const GroupSchema = new Schema<IGroup>({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   className: { type: String, required: true },
   subject: { type: String, required: true },

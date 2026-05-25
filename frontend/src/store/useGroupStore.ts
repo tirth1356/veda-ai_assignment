@@ -20,6 +20,7 @@ interface GroupState {
   createGroup: (name: string, className: string, subject: string) => Promise<Group>;
   getGroup: (id: string) => Promise<Group>;
   addAssignmentToGroup: (groupId: string, assignmentId: string) => Promise<void>;
+  resetStore: () => void;
 }
 
 export const useGroupStore = create<GroupState>((set, get) => ({
@@ -27,10 +28,21 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  resetStore: () => set({
+    groups: [],
+    isLoading: false,
+    error: null
+  }),
+
   fetchGroups: async () => {
+    const token = localStorage.getItem('veda_token');
+    if (!token) return;
+
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`${API_BASE_URL}/groups`);
+      const response = await fetch(`${API_BASE_URL}/groups`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error('Failed to fetch groups');
       const data = await response.json();
       set({ groups: data, isLoading: false });
@@ -40,11 +52,17 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   createGroup: async (name, className, subject) => {
+    const token = localStorage.getItem('veda_token');
+    if (!token) throw new Error('Not authenticated');
+
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`${API_BASE_URL}/groups`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({ name, className, subject }),
       });
       if (!response.ok) throw new Error('Failed to create group');
@@ -58,15 +76,22 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   },
 
   getGroup: async (id: string) => {
-    const response = await fetch(`${API_BASE_URL}/groups/${id}`);
+    const token = localStorage.getItem('veda_token');
+    const response = await fetch(`${API_BASE_URL}/groups/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     if (!response.ok) throw new Error('Failed to fetch group details');
     return await response.json();
   },
 
   addAssignmentToGroup: async (groupId, assignmentId) => {
+    const token = localStorage.getItem('veda_token');
     const response = await fetch(`${API_BASE_URL}/groups/${groupId}/assignments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
       body: JSON.stringify({ assignmentId }),
     });
     if (!response.ok) throw new Error('Failed to add assignment to group');
