@@ -14,17 +14,47 @@ VedaAI is a full-stack AI-powered assessment generator application built based o
 - **Real-time Processing Updates**: Live WebSockets integration to display assessment generation progress in real-time.
 
 ## ⭐ Bonus Features
-- **Multi-Agent AI Architecture**: Implements a sophisticated 3-agent pipeline (Creator Agent, Reviewer Agent, Solver Agent) that dramatically reduces hallucinations and ensures exam questions strictly adhere to constraints, complexity, and factuality.
-- **Polished & Mobile-Responsive UI**: A highly polished, aesthetically modern interface built with Tailwind CSS, featuring smooth micro-interactions, robust empty states, responsive sidebars, and full mobile compatibility across all views.
-- **Robust Background Processing (BullMQ)**: Uses Redis and BullMQ to handle long-running AI generation jobs asynchronously, ensuring the Express server remains non-blocking and highly scalable.
-- **Real-time WebSockets**: Provides a seamless live progress overlay that updates the user with exact AI generation stages (Creator -> Reviewer -> Solver) via Socket.io.
-- **Iterative AI Refinement**: The "Review" feature acts as a Refiner Agent, allowing teachers to provide natural language feedback to rewrite, modify, or delete specific questions without regenerating the entire paper.
-- **File Management & Context Ingestion**: Upload syllabus PDFs or TXT documents which are parsed natively using `pdf-parse` and passed as context material to the AI to ground the assessment in course material.
-- **Authentication & Personalization**: Localized Settings page with profile avatar uploads and school customization that persists robustly with intelligent LocalStorage failovers.
-- **PDF Export Engine**: Download generated assessments as cleanly formatted, print-ready PDFs dynamically generated on the backend via `pdfkit` (not just raw browser printing).
-- **Advanced State Management**: Built using Zustand for centralized, prop-drilling-free frontend state, optimizing React rendering.
-- **Dynamic Analytics Dashboard**: Visualizes assessment generation trends with beautiful Recharts data visualizations and real-time computation of generated question marks.
+- **Review & Refinement Workflow**  
+  Teachers can preview, edit, regenerate, or refine questions before exporting the final paper.
 
+- **Multi-Agent AI Pipeline**  
+  Creator, Reviewer, and Solver agents collaboratively generate, validate, and refine assessments.
+
+- **Difficulty Distribution Control**  
+  Configure exact Easy / Medium / Hard ratios enforced during AI generation.
+
+- **AI Output Validation Layer**  
+  Automatically validates marks, question counts, duplicates, and section consistency before saving.
+
+- **Hallucination Detection (Solver Agent)**  
+  Secondary AI verification layer detects incorrect or inconsistent generated answers.
+
+- **Real-time WebSockets & BullMQ Queues**  
+  Live generation progress updates powered by Socket.io, Redis, and BullMQ.
+
+- **Context Chunking + Retrieval (Mini-RAG)**  
+  Uploaded PDFs are chunked and only the most relevant context is injected into prompts.
+
+- **Polished Responsive UI**  
+  Modern Tailwind UI with responsive layouts, smooth animations, and optimized mobile support.
+
+- **Auto Save Drafts**  
+  Form state is automatically persisted locally to prevent accidental data loss.
+
+- **Skeleton Loaders & Micro-interactions**  
+  Dynamic loading states and transitions for a premium user experience.
+
+- **Advanced State Management**  
+  Centralized Zustand store architecture for scalable and optimized frontend state handling.
+
+- **Analytics Dashboard**  
+  Visualizes generation statistics and assessment metrics using Recharts.
+
+- **Authentication & Personalization**  
+  User settings, profile customization, and persistent local preferences support.
+
+- **Real Exam PDF Layout**  
+  A4-optimized PDF export with proper page breaks, headers, footers, and print-ready formatting.
 ---
 
 ## 🏗️ Architecture Overview & Approach

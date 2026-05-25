@@ -114,7 +114,45 @@ export default function CreateAssignment() {
   const [className, setClassName] = useState('Grade 8');
   const [timeValue, setTimeValue] = useState(45);
   const [timeUnit, setTimeUnit] = useState('minutes');
-  const [difficulty, setDifficulty] = useState('Mixed');
+  
+  // Advanced Difficulty Distribution
+  const [easyPct, setEasyPct] = useState(30);
+  const [mediumPct, setMediumPct] = useState(50);
+  const [hardPct, setHardPct] = useState(20);
+  const difficultySum = easyPct + mediumPct + hardPct;
+
+  // Auto Save & Restore Draft
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const draft = localStorage.getItem('veda_draft_assignment');
+    const isNew = !window.location.search.includes('id=');
+    if (draft && isNew) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (confirm('You have an unsaved draft. Do you want to restore it?')) {
+          if (parsed.title) setTitle(parsed.title);
+          if (parsed.subject) setSubject(parsed.subject);
+          if (parsed.className) setClassName(parsed.className);
+          if (parsed.questionRows) setQuestionRows(parsed.questionRows);
+          if (parsed.additionalInstructions) setAdditionalInstructions(parsed.additionalInstructions);
+          if (parsed.easyPct !== undefined) setEasyPct(parsed.easyPct);
+          if (parsed.mediumPct !== undefined) setMediumPct(parsed.mediumPct);
+          if (parsed.hardPct !== undefined) setHardPct(parsed.hardPct);
+        } else {
+          localStorage.removeItem('veda_draft_assignment');
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+  // Save to draft on change
+  useEffect(() => {
+    if (step === 1 && title) {
+      localStorage.setItem('veda_draft_assignment', JSON.stringify({
+        title, subject, className, questionRows, additionalInstructions, easyPct, mediumPct, hardPct
+      }));
+    }
+  }, [title, subject, className, questionRows, additionalInstructions, easyPct, mediumPct, hardPct, step]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -341,7 +379,7 @@ export default function CreateAssignment() {
     formData.append('subject', subject);
     formData.append('className', className);
     formData.append('timeAllowed', `${timeValue} ${timeUnit}`);
-    formData.append('difficulty', difficulty);
+    formData.append('difficulty', JSON.stringify({ easy: easyPct, medium: mediumPct, hard: hardPct }));
     
     // Map UI structure to backend JSON string
     const typesPayload = questionRows.map(row => ({
@@ -389,6 +427,7 @@ export default function CreateAssignment() {
 
       // Clear the temporary selection
       localStorage.removeItem('veda_selected_library_reference');
+      localStorage.removeItem('veda_draft_assignment'); // Clear draft on successful submission
     } catch (err: any) {
       console.error(err);
       showToast(err.message || 'Failed to submit assignment creation.', 'error');
@@ -609,18 +648,27 @@ export default function CreateAssignment() {
                   </select>
                 </div>
               </div>
-              <div className="flex flex-col space-y-2">
-                <label className="text-xs font-bold text-gray-600">Overall Difficulty</label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-500 rounded-xl text-xs bg-white text-gray-700 font-medium"
-                >
-                  <option value="Mixed">Mixed</option>
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
+              <div className="flex flex-col space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-gray-600">AI Difficulty Distribution</label>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${difficultySum === 100 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    Total: {difficultySum}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col space-y-1 flex-1">
+                    <label className="text-[10px] font-bold text-green-600">Easy %</label>
+                    <input type="number" min="0" max="100" value={easyPct} onChange={e => setEasyPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-green-200 focus:ring-1 focus:ring-green-500 rounded-lg text-xs font-semibold text-green-700 bg-green-50" />
+                  </div>
+                  <div className="flex flex-col space-y-1 flex-1">
+                    <label className="text-[10px] font-bold text-blue-600">Medium %</label>
+                    <input type="number" min="0" max="100" value={mediumPct} onChange={e => setMediumPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-blue-200 focus:ring-1 focus:ring-blue-500 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50" />
+                  </div>
+                  <div className="flex flex-col space-y-1 flex-1">
+                    <label className="text-[10px] font-bold text-red-600">Hard %</label>
+                    <input type="number" min="0" max="100" value={hardPct} onChange={e => setHardPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-red-200 focus:ring-1 focus:ring-red-500 rounded-lg text-xs font-semibold text-red-700 bg-red-50" />
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -81,9 +81,10 @@ export default function AssignmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="w-full flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
-        <p className="text-gray-500 font-bold text-sm animate-pulse">Loading your assignments...</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <AssignmentCardSkeleton key={i} />
+        ))}
       </div>
     );
   }

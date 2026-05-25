@@ -5,6 +5,7 @@ import { Users, Plus, BookOpen, GraduationCap, ArrowRight, Loader2, X } from 'lu
 import { useToastStore } from '../../store/useToastStore';
 import { useGroupStore } from '../../store/useGroupStore';
 import Link from 'next/link';
+import { GroupCardSkeleton } from '../../components/Skeleton';
 
 export default function GroupsPage() {
   const showToast = useToastStore((state) => state.showToast);
@@ -65,10 +66,12 @@ export default function GroupsPage() {
         </button>
       </div>
 
+
       {isLoading && groups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
-          <p className="text-gray-500 font-bold text-sm animate-pulse">Loading groups...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <GroupCardSkeleton key={i} />
+          ))}
         </div>
       ) : groups.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 bg-white border border-gray-100 rounded-3xl space-y-4">

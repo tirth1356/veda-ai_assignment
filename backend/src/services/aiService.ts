@@ -10,7 +10,7 @@ interface GenerateParams {
   title: string;
   className?: string;
   subject?: string;
-  difficulty?: string;
+  difficulty?: string; // Now typically a JSON string like {"easy":30,"medium":50,"hard":20}
   questionTypes: QuestionInput[];
   additionalInstructions?: string;
   referenceText?: string;
@@ -19,6 +19,74 @@ interface GenerateParams {
 
 // Progress status callback for reporting agent steps
 type AgentProgressCallback = (message: string, progress: number) => void;
+
+// --- Mini-RAG: Context Chunking & Retrieval ---
+function chunkAndRetrieveContext(text: string, title: string, subject: string, topK: number = 3): string {
+  if (!text) return '';
+  
+  // Split text into paragraphs/chunks
+  const chunks = text.split(/\n\s*\n/).filter(c => c.trim().length > 100);
+  
+  // Extract search keywords from title and subject
+  const keywords = [...title.toLowerCase().split(' '), ...subject.toLowerCase().split(' ')]
+    .map(w => w.replace(/[^a-z0-9]/g, ''))
+    .filter(w => w.length > 3);
+  
+  if (keywords.length === 0 || chunks.length <= topK) {
+    return chunks.slice(0, topK).join('\n...\n');
+  }
+
+  // Score chunks based on keyword frequency
+  const scoredChunks = chunks.map(chunk => {
+    let score = 0;
+    const lowerChunk = chunk.toLowerCase();
+    keywords.forEach(kw => {
+      // Basic term frequency
+      const regex = new RegExp(`\\b${kw}\\b`, 'g');
+      const matches = lowerChunk.match(regex);
+      if (matches) score += matches.length;
+    });
+    return { chunk, score };
+  });
+  
+  // Sort by score descending
+  scoredChunks.sort((a, b) => b.score - a.score);
+  
+  // Return the top K most relevant chunks
+  return scoredChunks.slice(0, topK).map(c => c.chunk).join('\n...\n');
+}
+
+// --- Validation Layer ---
+function validateAssessment(paper: any, expectedTotalMarks: number, expectedTotalQuestions: number) {
+  let actualMarks = 0;
+  let actualQuestions = 0;
+  const questionTexts = new Set();
+  
+  if (!paper.sections || !Array.isArray(paper.sections)) throw new Error("Validation Failed: Missing sections array.");
+  
+  for (const sec of paper.sections) {
+    if (!sec.questions || !Array.isArray(sec.questions)) throw new Error(`Validation Failed: Missing questions array in section ${sec.title}.`);
+    for (const q of sec.questions) {
+      if (typeof q.marks !== 'number') throw new Error(`Validation Failed: Invalid marks format for question.`);
+      actualMarks += q.marks;
+      actualQuestions += 1;
+      
+      const normalized = (q.questionText || '').toLowerCase().trim();
+      if (!normalized) throw new Error("Validation Failed: Empty question text detected.");
+      if (questionTexts.has(normalized)) {
+        throw new Error(`Validation Failed: Duplicate question detected: "${q.questionText}"`);
+      }
+      questionTexts.add(normalized);
+    }
+  }
+  
+  if (actualQuestions !== expectedTotalQuestions) {
+    throw new Error(`Validation Failed: Question count mismatch. Expected ${expectedTotalQuestions}, got ${actualQuestions}`);
+  }
+  if (actualMarks !== expectedTotalMarks) {
+    throw new Error(`Validation Failed: Marks mismatch. Expected ${expectedTotalMarks}, got ${actualMarks}`);
+  }
+}
 
 export const generateAssessmentPaper = async (
   params: GenerateParams,
@@ -37,24 +105,42 @@ export const generateAssessmentPaper = async (
     baseURL,
   });
 
+  const expectedTotalQuestions = params.questionTypes.reduce((acc, qt) => acc + qt.count, 0);
+  const expectedTotalMarks = params.questionTypes.reduce((acc, qt) => acc + (qt.count * qt.marks), 0);
+
   const questionTypesDesc = params.questionTypes
     .map((q) => `- ${q.type}: Generate ${q.count} questions, each worth ${q.marks} marks.`)
     .join('\n');
 
+  // Process Mini-RAG if reference text is provided
+  let injectedContext = '';
+  if (params.referenceText) {
+    if (onProgress) onProgress('RAG Agent: Chunking and retrieving highly relevant context...', 10);
+    const topChunks = chunkAndRetrieveContext(params.referenceText, params.title, params.subject || '');
+    injectedContext = `\n---\nRelevant Context Material (Extracted via RAG):\n${topChunks}\n---`;
+  }
+
+  // Parse Difficulty Distribution
+  let diffStr = params.difficulty || 'Mixed';
+  let diffInstruction = `Overall Paper Difficulty: "${diffStr}"`;
+  try {
+    const diffObj = JSON.parse(diffStr);
+    if (diffObj.easy !== undefined && diffObj.medium !== undefined && diffObj.hard !== undefined) {
+      diffInstruction = `DIFFICULTY BLUEPRINT ENFORCEMENT:\nYou MUST distribute the questions exactly as follows:\n- Easy: ${diffObj.easy}%\n- Medium: ${diffObj.medium}%\n- Challenging: ${diffObj.hard}%`;
+    }
+  } catch(e) {} // If it's just a plain string 'Mixed', ignore parse error
+
   // ==========================================
   // AGENT 1: CREATOR AGENT
   // ==========================================
-  if (onProgress) {
-    onProgress('Creator Agent: Designing assessment blueprint and drafting questions...', 45);
-  }
-
+  
   const creatorSystemPrompt = `You are a Creator Agent in a multi-agent system.
 Your job is to draft a professional, curriculum-compliant exam question paper based on specifications.
 Output a single, valid JSON object containing "sections", "subject", "className", and "timeAllowed".
 Do not output any other text, markdown blocks, or explanations.
 
 CRITICAL GUARDRAIL:
-If the user's provided topic/title is a single letter (like "a", "x"), a random meaningless letter sequence (like "asdf", "abc"), or contains insufficient/meaningless information to generate a valid curriculum exam paper, you MUST NOT generate dummy questions. Instead, output a JSON object containing a single key "error" explaining that the topic has insufficient or meaningless details (e.g. {"error": "The topic provided contains insufficient or meaningless information. Please specify a proper topic or provide a reference document."}). Do not default to a random subject like mathematics.
+If the user's provided topic/title contains insufficient/meaningless information to generate a valid curriculum exam paper, you MUST NOT generate dummy questions. Instead, output a JSON object containing a single key "error" explaining that the topic has insufficient details.
 
 Output JSON schema:
 {
@@ -70,7 +156,7 @@ Output JSON schema:
           "questionText": "Clear and specific question",
           "difficulty": "Easy" | "Moderate" | "Challenging",
           "marks": number,
-          "studentInstruction": "Optional instructions for the student. Do NOT ask the student to look at or reference any provided graphs, figures, or images, as none can be provided in this text-only format."
+          "studentInstruction": "Optional instructions for the student. Do NOT ask the student to look at or reference any provided graphs, figures, or images."
         }
       ]
     }
@@ -78,26 +164,23 @@ Output JSON schema:
 }
 
 Guidelines:
-1. Strictly respect the requested question types, counts, and marks.
-2. Adjust the cognitive complexity, mathematical rigor, vocabulary, and depth to be appropriate for the requested target grade level.
-3. Distribute difficulty levels relative to that grade: 'Easy', 'Moderate', and 'Challenging'.
-4. If reference material is provided, create questions directly testing that content.
-5. CRITICAL: Do NOT generate any questions that rely on images, graphs, figures, or visual diagrams being shown to the student (e.g., never generate questions starting with "Identify the graph shown below", "In the figure given", or "What is the value of x in the graph"). Assume the student only has plain text.`;
+1. Strictly respect the requested question types, counts, and marks. The total counts MUST perfectly match the prompt requirements.
+2. If reference material is provided, create questions directly testing that content.
+3. CRITICAL: Do NOT generate any questions that rely on images, graphs, figures, or visual diagrams being shown to the student. Assume the student only has plain text.`;
 
   const creatorUserPrompt = `Draft an assessment for:
 Topic: "${params.title}"
 Subject Context: "${params.subject || 'Science'}"
 Target Grade/Class Level: "${params.className || 'Grade 8'}"
-Overall Paper Difficulty: "${params.difficulty || 'Mixed'}"
-Question Types Required:
+
+${diffInstruction}
+
+Question Types Required (MUST MATCH EXACTLY):
 ${questionTypesDesc}
 
 ${params.additionalInstructions ? `Additional Guidelines: "${params.additionalInstructions}"` : ''}
 
-${params.referenceText ? `---
-Reference Material:
-${params.referenceText}
----` : ''}`;
+${injectedContext}`;
 
   let draftPaper;
   
@@ -105,41 +188,13 @@ ${params.referenceText}
     // ==========================================
     // AGENT 1A: REFINER AGENT (Modifying Existing Paper)
     // ==========================================
-    if (onProgress) {
-      onProgress('Refiner Agent: Analyzing existing paper and applying requested changes...', 30);
-    }
+    if (onProgress) onProgress('Refiner Agent: Analyzing existing paper and applying requested changes...', 30);
+    
     const refinerSystemPrompt = `You are a Refiner Agent in an educational assessment platform.
 The user has an existing question paper and has requested specific revisions (e.g., "replace Q3", "make questions harder").
 You must apply their feedback to the existing questions, modifying ONLY what is necessary to satisfy the request.
-Output a JSON object with this exact structure:
-{
-  "subject": "String",
-  "className": "String",
-  "timeAllowed": "String",
-  "sections": [
-    {
-      "title": "String",
-      "instruction": "String",
-      "questions": [
-        {
-          "questionText": "String",
-          "difficulty": "Easy | Moderate | Challenging",
-          "marks": Number,
-          "svgDiagram": "String or null"
-        }
-      ]
-    }
-  ],
-  "answerKey": [
-    {
-      "questionNumber": Number,
-      "answerText": "String"
-    }
-  ]
-}
-Maintain the JSON schema perfectly. Preserve any questions that the user did not ask to change.
-CRITICAL INSTRUCTION: If the user asks to remove or delete a specific question, you MUST ONLY remove that single question from the "questions" array. Do NOT delete the entire section. 
-CRITICAL INSTRUCTION: If you replace or modify a question, you MUST accurately rewrite the corresponding answer inside the "answerKey" array to match the new question. Do not leave the old answer.`;
+Output a JSON object with the exact same structure as the input, preserving untouched questions.
+CRITICAL: If you replace or modify a question, rewrite the corresponding answer inside the "answerKey" array to match.`;
 
     const refinerUserPrompt = `
 Existing Paper Sections JSON:
@@ -150,8 +205,6 @@ ${JSON.stringify(params.existingPaper.answerKey, null, 2)}
 
 User Feedback / Additional Instructions:
 ${params.additionalInstructions || 'No feedback provided. Keep paper as is.'}
-
-Overall Target Difficulty: "${params.difficulty || 'Mixed'}"
 `;
 
     try {
@@ -167,70 +220,69 @@ Overall Target Difficulty: "${params.difficulty || 'Mixed'}"
 
       const refinedText = refinerResponse.choices[0]?.message?.content || '';
       draftPaper = JSON.parse(refinedText.trim());
-      console.log('Refiner Agent output successfully parsed.');
-      
-      // Early return to skip Creator/Reviewer/Solver if we're just refining!
-      return draftPaper;
+      return draftPaper; // Skip generation pipeline for pure refinement
     } catch (error: any) {
-      console.error('Refiner Agent failed:', error);
       throw new Error(error.message || 'Refiner Agent failed to refine the assessment.');
     }
   } else {
     // ==========================================
-    // AGENT 1B: CREATOR AGENT (Drafting)
+    // CREATION & VALIDATION LOOP
     // ==========================================
-    if (onProgress) {
-      onProgress('Creator Agent: Structuring syllabus, analyzing content, and drafting paper...', 30);
-    }
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastValidationError = null;
 
-    try {
-      const creatorResponse = await openai.chat.completions.create({
-        model: modelName,
-        messages: [
-          { role: 'system', content: creatorSystemPrompt },
-          { role: 'user', content: creatorUserPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5,
-      });
+    while (attempts < maxAttempts) {
+      attempts++;
+      if (onProgress) onProgress(`Creator Agent: Drafting paper (Attempt ${attempts}/${maxAttempts})...`, 20 + (attempts * 5));
 
-      const draftText = creatorResponse.choices[0]?.message?.content || '';
-      draftPaper = JSON.parse(draftText.trim());
-      
-      if (draftPaper.error) {
-        throw new Error(draftPaper.error);
+      try {
+        const creatorResponse = await openai.chat.completions.create({
+          model: modelName,
+          messages: [
+            { role: 'system', content: creatorSystemPrompt },
+            { role: 'user', content: creatorUserPrompt + (lastValidationError ? `\n\nPREVIOUS GENERATION FAILED VALIDATION: ${lastValidationError}. Fix this immediately.` : '') },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.4 + (attempts * 0.1), // Slightly increase temp on retries to unstick
+        });
+
+        const draftText = creatorResponse.choices[0]?.message?.content || '';
+        draftPaper = JSON.parse(draftText.trim());
+        
+        if (draftPaper.error) {
+          throw new Error(draftPaper.error);
+        }
+        
+        // --- Output Validation Layer ---
+        if (onProgress) onProgress(`Validation Agent: Verifying schema, marks (${expectedTotalMarks}), and counts (${expectedTotalQuestions})...`, 40);
+        validateAssessment(draftPaper, expectedTotalMarks, expectedTotalQuestions);
+        
+        // If it passes validation, break the loop
+        console.log(`Creator Agent output passed validation on attempt ${attempts}.`);
+        break;
+      } catch (error: any) {
+        lastValidationError = error.message;
+        console.warn(`Creator validation failed on attempt ${attempts}:`, lastValidationError);
+        if (attempts >= maxAttempts) {
+          throw new Error(`AI generation repeatedly failed strict schema validation. Last Error: ${lastValidationError}`);
+        }
       }
-      
-      console.log('Creator Agent output successfully parsed.');
-    } catch (error: any) {
-      console.error('Creator Agent failed:', error);
-      throw new Error(error.message || 'Creator Agent failed to formulate the assessment.');
     }
   }
 
   // ==========================================
   // AGENT 2: REVIEWER AGENT (Critic / Guardrail)
   // ==========================================
-  if (onProgress) {
-    onProgress('Reviewer Agent: Validating counts, marks, difficulty, and factual accuracy...', 65);
-  }
+  if (onProgress) onProgress('Reviewer Agent: Enhancing vocabulary and factual accuracy...', 55);
 
-  const reviewerSystemPrompt = `You are a Reviewer Agent in a multi-agent system.
-Your job is to review the drafted exam paper generated by the Creator Agent, verify counts/marks, and make necessary edits to ensure perfect quality.
-You must output a single, valid JSON object matching the exact input structure, containing the corrected/improved "sections", "subject", "className", and "timeAllowed".
-Do not output any other text or explanation.
+  const reviewerSystemPrompt = `You are a Reviewer Agent.
+Review the drafted exam paper generated by the Creator Agent.
+1. Fix any ambiguous phrasing, grammatical errors, or factual inaccuracies.
+2. ABSOLUTE CRITICAL CHECK: Read every single question. If ANY question references a missing graph, figure, image, or visual diagram (e.g., "in the graph below"), you MUST rewrite the question to be a pure text-based problem.
+3. Output a single, valid JSON object matching the exact input structure. Do NOT change question counts or marks.`;
 
-Your assessment criteria:
-1. Verify question count: Does it match the user requirement?
-2. Verify marks: Does each question match the specified mark?
-3. Grammar and Factual Correctness: Fix any ambiguous or factual errors.
-4. ABSOLUTE CRITICAL CHECK: Read every single question. If ANY question references a graph, figure, image, or visual diagram (e.g., "in the graph below", "the figure shows"), you MUST rewrite the question to be a pure text-based conceptual or mathematical problem, or replace it entirely with a valid question of the same topic and difficulty.
-5. If correct, return it unchanged. If incorrect or violating rule 4, correct it and return the corrected JSON.`;
-
-  const reviewerUserPrompt = `User Requirements:
-${questionTypesDesc}
-
-Draft Paper under Review:
+  const reviewerUserPrompt = `Draft Paper under Review:
 ${JSON.stringify(draftPaper, null, 2)}`;
 
   let reviewedPaper;
@@ -247,37 +299,34 @@ ${JSON.stringify(draftPaper, null, 2)}`;
 
     const reviewedText = reviewerResponse.choices[0]?.message?.content || '';
     reviewedPaper = JSON.parse(reviewedText.trim());
-    console.log('Reviewer Agent evaluation complete.');
+    
+    // Quick safety check: if Reviewer messed up the structure, fallback to draft
+    validateAssessment(reviewedPaper, expectedTotalMarks, expectedTotalQuestions);
   } catch (error) {
-    console.warn('Reviewer Agent failed, falling back to draft:', error);
+    console.warn('Reviewer Agent failed or broke schema, falling back to original draft:', error);
     reviewedPaper = draftPaper;
   }
 
   // ==========================================
-  // AGENT 3: SOLVER AGENT (Answer Key Generator)
+  // AGENT 3: SOLVER AGENT (Hallucination Detection)
   // ==========================================
-  if (onProgress) {
-    onProgress('Solver Agent: Solving assessment questions and generating answer keys...', 80);
-  }
+  if (onProgress) onProgress('Solver Agent: Solving questions and detecting hallucinations...', 75);
 
-  const solverSystemPrompt = `You are a Solver Agent in a multi-agent system.
-Your job is to solve the finalized assessment paper questions chronologically and return a comprehensive Answer Key.
-Output a single, valid JSON object containing an "answerKey" array.
-Do not output any other text or explanation.
+  const solverSystemPrompt = `You are a Solver Agent.
+Your job is to solve the finalized assessment paper questions.
+If a question is impossible to solve, lacks necessary context, or is factually paradoxical, you must flag it as a hallucination.
+Output a JSON object containing an "answerKey" array.
 
-Output JSON schema:
+Schema:
 {
   "answerKey": [
     {
       "questionNumber": number,
-      "answerText": "Detailed explanation and final correct answer."
+      "answerText": "Detailed explanation and final correct answer. If hallucinatory, state 'HALLUCINATION DETECTED: [Reason]'"
     }
   ]
-}
+}`;
 
-Ensure the answers are complete, clear, and direct.`;
-
-  // Flatten questions to pass to the solver
   const questionsToSolve: { number: number; text: string; marks: number }[] = [];
   let index = 1;
   reviewedPaper.sections.forEach((sec: any) => {
@@ -307,19 +356,27 @@ ${JSON.stringify(questionsToSolve, null, 2)}`;
 
     const solvedText = solverResponse.choices[0]?.message?.content || '';
     solvedKey = JSON.parse(solvedText.trim());
-    console.log('Solver Agent output successfully parsed.');
+    
+    // Log hallucinations if detected
+    const hallucinations = solvedKey.answerKey.filter((a: any) => a.answerText.includes('HALLUCINATION DETECTED'));
+    if (hallucinations.length > 0) {
+      console.warn('Solver Agent detected hallucinations:', hallucinations);
+      // In a production system, we would route this back to the Reviewer. For now, we log it and keep the flag in the answer key.
+      if (onProgress) onProgress(`Solver Agent flagged ${hallucinations.length} questions as potential hallucinations.`, 85);
+    }
+
   } catch (error) {
     console.error('Solver Agent failed:', error);
-    // Build a mock/empty answer key to avoid crash
     solvedKey = {
       answerKey: questionsToSolve.map((q) => ({
         questionNumber: q.number,
-        answerText: 'Solution key generation failed. Please consult reference guides.',
+        answerText: 'Solution key generation failed.',
       })),
     };
   }
 
-  // Combine Reviewed Paper with Answer Key
+  if (onProgress) onProgress('Finalizing payload and saving to database...', 95);
+
   return {
     ...reviewedPaper,
     answerKey: solvedKey.answerKey,
