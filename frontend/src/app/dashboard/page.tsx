@@ -73,54 +73,22 @@ export default function Dashboard() {
     }
   };
 
-  // Mock list of recent assignments matching Figma screenshots if DB is empty
-  const mockRecentAssignments = [
-    {
-      _id: 'mock-1',
-      title: 'Assignment on Motion',
-      status: 'COMPLETED',
-      subject: 'Science',
-      className: 'Class 10-A',
-      submittedCount: '50/50',
-      dueDate: '21-06-2025',
-      createdAt: '2025-06-20T00:00:00.000Z',
-      lineColor: 'border-orange-500',
-      activeTag: 'Active',
-      tagColor: 'bg-green-50 text-green-700'
-    },
-    {
-      _id: 'mock-2',
-      title: 'Quiz on Electricity',
-      status: 'COMPLETED',
-      subject: 'Science',
-      className: 'Class 10-A',
-      submittedCount: '47/50',
-      dueDate: '21-06-2025',
-      createdAt: '2025-06-20T00:00:00.000Z',
-      lineColor: 'border-red-500',
-      activeTag: 'Closed',
-      tagColor: 'bg-gray-100 text-gray-700'
-    }
-  ];
-
-  // Pick display assignments (actual DB entries take precedence, fall back to mock)
-  const displayAssignments = assignments.length > 0 
-    ? assignments.slice(0, 2).map((a, index) => ({
-        _id: a._id,
-        title: a.title,
-        status: a.status,
-        subject: a.subject || 'Science',
-        className: a.className || 'Class 10-A',
-        submittedCount: index === 0 ? '50/50' : '47/50', // Mock submissions count
-        dueDate: formatDate(a.dueDate),
-        createdAt: a.createdAt,
-        lineColor: index === 0 ? 'border-orange-500' : 'border-red-500',
-        activeTag: a.status === 'COMPLETED' ? 'Active' : 'Processing',
-        tagColor: a.status === 'COMPLETED' 
-          ? 'bg-green-50 text-green-700'
-          : 'bg-orange-50 text-orange-700 animate-pulse'
-      }))
-    : mockRecentAssignments;
+  // Pick display assignments (actual DB entries)
+  const displayAssignments = assignments.slice(0, 2).map((a, index) => ({
+    _id: a._id,
+    title: a.title,
+    status: a.status,
+    subject: a.subject || 'Science',
+    className: a.className || 'Class 10-A',
+    submittedCount: index === 0 ? '50/50' : '47/50', // Mock submissions count since we don't have submissions yet
+    dueDate: formatDate(a.dueDate),
+    createdAt: a.createdAt,
+    lineColor: index === 0 ? 'border-orange-500' : 'border-red-500',
+    activeTag: a.status === 'COMPLETED' ? 'Active' : 'Processing',
+    tagColor: a.status === 'COMPLETED' 
+      ? 'bg-green-50 text-green-700'
+      : 'bg-orange-50 text-orange-700 animate-pulse'
+  }));
 
   const EmptyStateGraphic = () => (
     <div className="relative w-56 h-56 mx-auto flex items-center justify-center">
@@ -128,8 +96,18 @@ export default function Dashboard() {
     </div>
   );
  
+  // Show loading spinner while fetching
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full"></div>
+        <p className="text-gray-400 font-bold text-xs mt-4 animate-pulse">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   // If there are no assignments in the DB, show high-fidelity Empty State screen matching Figma mockup
-  if (!isLoading && assignments.length === 0) {
+  if (assignments.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 text-center max-w-md mx-auto space-y-6 select-none animate-in fade-in duration-300">
         <EmptyStateGraphic />
