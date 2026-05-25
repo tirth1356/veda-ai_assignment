@@ -52,8 +52,25 @@ export const initWorker = (): Worker => {
               referenceText = fs.readFileSync(absolutePath, 'utf-8');
               console.log(`Parsed text file successfully. Length: ${referenceText.length} characters.`);
             }
+
+            // Cleanup uploaded file post-parsing
+            try {
+              fs.unlinkSync(absolutePath);
+              console.log(`Cleaned up uploaded file: ${absolutePath}`);
+            } catch (cleanupErr) {
+              console.error(`Failed to cleanup file ${absolutePath}:`, cleanupErr);
+            }
           } else {
             console.warn(`Attached file not found at path: ${absolutePath}`);
+          }
+        }
+
+        // Limit reference text length to prevent unbounded context windows
+        if (referenceText) {
+          const MAX_REF_CHARS = 100000;
+          if (referenceText.length > MAX_REF_CHARS) {
+            referenceText = referenceText.substring(0, MAX_REF_CHARS);
+            console.log(`Truncated reference text to ${MAX_REF_CHARS} characters.`);
           }
         }
 
