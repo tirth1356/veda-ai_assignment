@@ -50,17 +50,17 @@ export class AssignmentPDFGenerator {
     assignment: any,
     options: PDFGenerationOptions = {}
   ): Promise<PDFGenerationResult> {
-    // Validate input data
-    const validationErrors = validateAssignment(assignment);
+    // Normalize data first to provide fallbacks for older assignments
+    const normalizedAssignment = normalizeAssignment(assignment);
+
+    // Validate the normalized input data
+    const validationErrors = validateAssignment(normalizedAssignment);
     if (validationErrors.length > 0) {
       throw new ValidationError(
         'Assignment validation failed',
         validationErrors
       );
     }
-
-    // Normalize data
-    const normalizedAssignment = normalizeAssignment(assignment);
 
     // Generate PDF with timeout
     return new Promise((resolve, reject) => {
