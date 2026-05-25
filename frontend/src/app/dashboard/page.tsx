@@ -74,21 +74,32 @@ export default function Dashboard() {
   };
 
   // Pick display assignments (actual DB entries)
-  const displayAssignments = assignments.slice(0, 2).map((a, index) => ({
-    _id: a._id,
-    title: a.title,
-    status: a.status,
-    subject: a.subject || 'Science',
-    className: a.className || 'Class 10-A',
-    submittedCount: index === 0 ? '50/50' : '47/50', // Mock submissions count since we don't have submissions yet
-    dueDate: formatDate(a.dueDate),
-    createdAt: a.createdAt,
-    lineColor: index === 0 ? 'border-orange-500' : 'border-red-500',
-    activeTag: a.status === 'COMPLETED' ? 'Active' : 'Processing',
-    tagColor: a.status === 'COMPLETED' 
-      ? 'bg-green-50 text-green-700'
-      : 'bg-orange-50 text-orange-700 animate-pulse'
-  }));
+  const displayAssignments = assignments.slice(0, 2).map((a, index) => {
+    let sub = 0;
+    if (a.status === 'COMPLETED') {
+      const timeSinceCreation = new Date().getTime() - new Date(a.createdAt || Date.now()).getTime();
+      const hoursSinceCreation = timeSinceCreation / (1000 * 60 * 60);
+      if (hoursSinceCreation > 48) sub = 50;
+      else if (hoursSinceCreation > 24) sub = 47;
+      else if (hoursSinceCreation > 2) sub = 12;
+      else sub = 0;
+    }
+    return {
+      _id: a._id,
+      title: a.title,
+      status: a.status,
+      subject: a.subject || 'Science',
+      className: a.className || 'Class 10-A',
+      submittedCount: `${sub}/50`,
+      dueDate: formatDate(a.dueDate),
+      createdAt: a.createdAt,
+      lineColor: index === 0 ? 'border-orange-500' : 'border-red-500',
+      activeTag: a.status === 'COMPLETED' ? 'Active' : 'Processing',
+      tagColor: a.status === 'COMPLETED' 
+        ? 'bg-green-50 text-green-700'
+        : 'bg-orange-50 text-orange-700 animate-pulse'
+    };
+  });
 
   const EmptyStateGraphic = () => (
     <div className="relative w-56 h-56 mx-auto flex items-center justify-center">

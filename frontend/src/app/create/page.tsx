@@ -64,7 +64,7 @@ export default function CreateAssignment() {
   // Form Fields
   const [title, setTitle] = useState('Quiz on Electricity');
   const [dueDate, setDueDate] = useState('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [libraryReferences, setLibraryReferences] = useState<any[]>([]);
   const [selectedLibraryRef, setSelectedLibraryRef] = useState<string>('');
@@ -268,18 +268,21 @@ export default function CreateAssignment() {
     e.preventDefault();
     setIsDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (isValidFile(droppedFile)) {
-        setFile(droppedFile);
-        setSelectedLibraryRef(''); // Clear library dropdown if local file chosen
+      const droppedFiles = Array.from(e.dataTransfer.files).filter(isValidFile);
+      if (droppedFiles.length > 0) {
+        setFiles(prev => [...prev, ...droppedFiles].slice(0, 5)); // max 5 files
+        setSelectedLibraryRef(''); // Clear library dropdown if local files chosen
       }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setSelectedLibraryRef(''); // Clear library dropdown if local file chosen
+      const selectedFiles = Array.from(e.target.files).filter(isValidFile);
+      if (selectedFiles.length > 0) {
+        setFiles(prev => [...prev, ...selectedFiles].slice(0, 5)); // max 5 files
+        setSelectedLibraryRef(''); // Clear library dropdown if local files chosen
+      }
     }
   };
 
@@ -367,8 +370,8 @@ export default function CreateAssignment() {
     }));
     formData.append('questionTypes', JSON.stringify(typesPayload));
 
-    if (file) {
-      formData.append('file', file);
+    if (files.length > 0) {
+      files.forEach(f => formData.append('files', f));
     } else if (selectedLibraryRef) {
       const selectedItem = libraryReferences.find(r => r.id === selectedLibraryRef || r.name === selectedLibraryRef);
       if (selectedItem) {
@@ -383,22 +386,30 @@ export default function CreateAssignment() {
       setAssignmentId(resData.assignmentId);
       
       // Auto-sync new uploads to Library references
-      if (resData.file) {
+      if (resData.files && Array.isArray(resData.files)) {
         const storedLib = localStorage.getItem('veda_library_items');
         let currentLib = [];
         if (storedLib) {
           try { currentLib = JSON.parse(storedLib); } catch (e) {}
         }
-        const newLibItem = {
-          id: resData.file.filename,
-          name: resData.file.originalName,
-          type: 'Reference',
-          sizeOrDetails: (resData.file.size / (1024 * 1024)).toFixed(2) + ' MB',
-          savedOn: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
-          starred: false
-        };
-        if (!currentLib.some((item: any) => item.name === newLibItem.name)) {
-          const updatedLib = [newLibItem, ...currentLib];
+        
+        let newLibItems = [];
+        for (const fileData of resData.files) {
+          const newLibItem = {
+            id: fileData.filename,
+            name: fileData.originalName,
+            type: 'Reference',
+            sizeOrDetails: (fileData.size / (1024 * 1024)).toFixed(2) + ' MB',
+            savedOn: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+            starred: false
+          };
+          if (!currentLib.some((item: any) => item.name === newLibItem.name)) {
+            newLibItems.push(newLibItem);
+          }
+        }
+        
+        if (newLibItems.length > 0) {
+          const updatedLib = [...newLibItems, ...currentLib];
           localStorage.setItem('veda_library_items', JSON.stringify(updatedLib));
         }
       }
@@ -490,7 +501,7 @@ export default function CreateAssignment() {
                   onChange={(e) => {
                     setSelectedLibraryRef(e.target.value);
                     if (e.target.value) {
-                      setFile(null); // Clear file upload if library file selected
+                      setFiles([]); // Clear file upload if library file selected
                     }
                   }}
                   className="w-full px-4 py-2.5 border border-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 rounded-xl text-xs bg-white text-gray-700 font-medium"
@@ -527,43 +538,56 @@ export default function CreateAssignment() {
                   onChange={handleFileChange}
                   accept=".pdf,.txt"
                   className="hidden"
+                  multiple
                 />
                 
-                <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <Upload className="w-5 h-5 text-gray-400" />
-                </div>
-                
-                {file ? (
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-gray-800">{file.name}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                {files.length > 0 ? (
+                  <div className="w-full">
+                    <p className="text-xs font-bold text-gray-800 mb-3 text-center">{files.length} File{files.length > 1 ? 's' : ''} Uploaded</p>
+                    <div className="space-y-2 mb-4">
+                      {files.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between bg-white border border-gray-100 p-2 rounded-xl shadow-sm">
+                          <div className="flex flex-col truncate pr-2">
+                            <span className="text-xs font-bold text-gray-700 truncate">{f.name}</span>
+                            <span className="text-[10px] text-gray-400">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFiles(prev => prev.filter((_, index) => index !== i));
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {files.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                        className="w-full py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg text-[10px] font-bold transition-colors"
+                      >
+                        + Add Another File
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-gray-800">Choose a file or drag & drop it here</p>
-                    <p className="text-[10px] text-gray-400 mt-1">PDF, TXT up to 10MB</p>
+                  <div className="text-center flex flex-col items-center">
+                    <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-full flex items-center justify-center mb-3">
+                      <Upload className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="text-xs font-bold text-gray-800">Choose files or drag & drop</p>
+                    <p className="text-[10px] text-gray-400 mt-1">PDF, TXT up to 10MB (Max 5 files)</p>
+                    <button
+                      type="button"
+                      className="mt-4 px-4 py-1.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-full text-[10px] font-bold text-gray-600 transition-colors"
+                    >
+                      Browse Files
+                    </button>
                   </div>
-                )}
-
-                {file ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setFile(null); 
-                      if (fileInputRef.current) fileInputRef.current.value = ''; 
-                    }}
-                    className="mt-4 px-4 py-1.5 bg-red-50 border border-red-200 hover:bg-red-100 rounded-full text-[10px] font-bold text-red-600 transition-colors"
-                  >
-                    Remove File
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="mt-4 px-4 py-1.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-full text-[10px] font-bold text-gray-600 transition-colors"
-                  >
-                    Browse Files
-                  </button>
                 )}
               </div>
               <p className="text-[10px] text-gray-400 text-center">Upload images or documents of your preferred source material</p>

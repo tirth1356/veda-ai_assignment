@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { GraduationCap, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAssignmentStore } from '../store/useAssignmentStore';
+import { useGroupStore } from '../store/useGroupStore';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading, checkAuth, login } = useAuthStore();
-  const { resetStore, fetchAssignments } = useAssignmentStore();
+  const { resetStore: resetAssignmentStore, fetchAssignments } = useAssignmentStore();
+  const { resetStore: resetGroupStore, fetchGroups } = useGroupStore();
 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +35,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [checkAuth]);
 
   const handleSuccess = (token: string, user: any) => {
-    // 1. Clear the old account's assignment data from the store
-    resetStore();
+    // 1. Clear the old account's data from the stores
+    resetAssignmentStore();
+    resetGroupStore();
     // 2. Store new session data in localStorage + Zustand
     login(token, user);
-    // 3. Fetch this user's assignments fresh
+    // 3. Fetch this user's data fresh
     fetchAssignments();
+    fetchGroups();
     // 4. Navigate to dashboard
     router.push('/dashboard');
   };

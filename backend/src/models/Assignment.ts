@@ -30,8 +30,8 @@ export interface IAssignment extends Document {
   dueDate: Date;
   questionTypes: IQuestionTypeConfig[];
   additionalInstructions?: string;
-  filePath?: string;
-  originalFileName?: string;
+  filePaths?: string[];
+  originalFileNames?: string[];
   totalQuestions: number;
   totalMarks: number;
   
@@ -84,8 +84,8 @@ const AssignmentSchema = new Schema<IAssignment>({
   dueDate: { type: Date, required: true },
   questionTypes: { type: [QuestionTypeConfigSchema], default: [] },
   additionalInstructions: { type: String },
-  filePath: { type: String },
-  originalFileName: { type: String },
+  filePaths: [{ type: String }],
+  originalFileNames: [{ type: String }],
   totalQuestions: { type: Number, required: true },
   totalMarks: { type: Number, required: true },
   

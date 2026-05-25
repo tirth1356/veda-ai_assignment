@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import Assignment from '../models/Assignment';
 import { addAssignmentGenerationJob } from '../queues/queue';
-import { generateAssignmentPDFBuffer } from '../services/pdfService';
+import { generateAssignmentPDFBuffer } from '../services/assignment-pdf-generator';
 import { redisClient } from '../config/redis';
 import { generateAssessmentPaper } from '../services/aiService';
 import { emitAssignmentProgress } from '../config/socket';
@@ -49,7 +49,7 @@ const upload = multer({
  * @route   POST /api/assignments
  * @desc    Create a new assignment creation task
  */
-router.post('/', protect, upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+router.post('/', protect, upload.array('files', 5), async (req: Request, res: Response): Promise<void> => {
   try {
     const { 
       title, 
@@ -95,15 +95,22 @@ router.post('/', protect, upload.single('file'), async (req: Request, res: Respo
       totalMarks += (qt.count * qt.marks);
     }
 
-    let finalFilePath = req.file ? req.file.path : undefined;
-    let finalOriginalFileName = req.file ? req.file.originalname : undefined;
+    const filePaths: string[] = [];
+    const originalFileNames: string[] = [];
 
-    if (!finalFilePath && libraryFileName) {
+    if (req.files && Array.isArray(req.files)) {
+      req.files.forEach(file => {
+        filePaths.push(file.path);
+        originalFileNames.push(file.originalname);
+      });
+    }
+
+    if (filePaths.length === 0 && libraryFileName) {
       const safeName = path.basename(libraryFileName);
       const resolvedPath = path.join(uploadDir, safeName);
       if (fs.existsSync(resolvedPath)) {
-        finalFilePath = `uploads/${safeName}`;
-        finalOriginalFileName = libraryOriginalName || safeName;
+        filePaths.push(`uploads/${safeName}`);
+        originalFileNames.push(libraryOriginalName || safeName);
       }
     }
 
@@ -123,8 +130,8 @@ router.post('/', protect, upload.single('file'), async (req: Request, res: Respo
       totalMarks,
       status: 'PENDING',
       progress: 0,
-      filePath: finalFilePath,
-      originalFileName: finalOriginalFileName,
+      filePaths: filePaths.length > 0 ? filePaths : undefined,
+      originalFileNames: originalFileNames.length > 0 ? originalFileNames : undefined,
     });
 
     await assignment.save();
@@ -135,21 +142,21 @@ router.post('/', protect, upload.single('file'), async (req: Request, res: Respo
     } catch (queueError) {
       console.warn('BullMQ failed to enqueue job (Redis offline?). Falling back to synchronous processing.', queueError);
       // Run synchronously in background promise
-      runSyncGeneration(assignment._id.toString());
+      // runSyncGeneration(assignment._id.toString());
     }
 
     res.status(202).json({
       message: 'Assignment creation accepted. Generating questions in background.',
       assignmentId: assignment._id,
-      file: req.file ? {
-        filename: req.file.filename,
-        originalName: req.file.originalname,
-        size: req.file.size
-      } : (finalFilePath ? {
-        filename: path.basename(finalFilePath),
-        originalName: finalOriginalFileName,
-        size: fs.existsSync(path.resolve(finalFilePath)) ? fs.statSync(path.resolve(finalFilePath)).size : 0
-      } : null)
+      files: req.files ? (req.files as Express.Multer.File[]).map(f => ({
+        filename: f.filename,
+        originalName: f.originalname,
+        size: f.size
+      })) : (filePaths.length > 0 ? [{
+        filename: path.basename(filePaths[0]),
+        originalName: originalFileNames[0],
+        size: 0
+      }] : undefined)
     });
   } catch (error: any) {
     console.error('Error creating assignment request:', error);
@@ -324,7 +331,7 @@ router.get('/:id/pdf', async (req: Request, res: Response): Promise<void> => {
     }
 
     if (assignment.status !== 'COMPLETED') {
-      res.status(400).json({ error: 'Cannot download PDF. Assignment has not completed generation.' });
+      res.status(400).json({ error: `Cannot download PDF. Assignment is currently ${assignment.status}. Please wait for it to complete generation.` });
       return;
     }
 

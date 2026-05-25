@@ -31,37 +31,39 @@ export const initWorker = (): Worker => {
           message: 'Initializing generation process...',
         });
 
-        // Step 2: Read reference file if uploaded
+        // Step 2: Read reference files if uploaded
         let referenceText = '';
-        if (assignment.filePath) {
-          const absolutePath = path.resolve(assignment.filePath);
-          if (fs.existsSync(absolutePath)) {
-            console.log(`Reading reference file at: ${absolutePath}`);
-            emitAssignmentProgress(assignmentId, {
-              status: 'PROCESSING',
-              progress: 25,
-              message: 'Reading and parsing uploaded document...',
-            });
+        if (assignment.filePaths && assignment.filePaths.length > 0) {
+          for (const filePath of assignment.filePaths) {
+            const absolutePath = path.resolve(filePath);
+            if (fs.existsSync(absolutePath)) {
+              console.log(`Reading reference file at: ${absolutePath}`);
+              emitAssignmentProgress(assignmentId, {
+                status: 'PROCESSING',
+                progress: 25,
+                message: 'Reading and parsing uploaded documents...',
+              });
 
-            if (absolutePath.toLowerCase().endsWith('.pdf')) {
-              const fileBuffer = fs.readFileSync(absolutePath);
-              const parsedPdf = await pdfParse(fileBuffer);
-              referenceText = parsedPdf.text;
-              console.log(`Parsed PDF text successfully. Length: ${referenceText.length} characters.`);
+              if (absolutePath.toLowerCase().endsWith('.pdf')) {
+                const fileBuffer = fs.readFileSync(absolutePath);
+                const parsedPdf = await pdfParse(fileBuffer);
+                referenceText += parsedPdf.text + '\n\n';
+                console.log(`Parsed PDF text successfully.`);
+              } else {
+                referenceText += fs.readFileSync(absolutePath, 'utf-8') + '\n\n';
+                console.log(`Parsed text file successfully.`);
+              }
+
+              // Cleanup uploaded file post-parsing
+              try {
+                fs.unlinkSync(absolutePath);
+                console.log(`Cleaned up uploaded file: ${absolutePath}`);
+              } catch (cleanupErr) {
+                console.error(`Failed to cleanup file ${absolutePath}:`, cleanupErr);
+              }
             } else {
-              referenceText = fs.readFileSync(absolutePath, 'utf-8');
-              console.log(`Parsed text file successfully. Length: ${referenceText.length} characters.`);
+              console.warn(`Attached file not found at path: ${absolutePath}`);
             }
-
-            // Cleanup uploaded file post-parsing
-            try {
-              fs.unlinkSync(absolutePath);
-              console.log(`Cleaned up uploaded file: ${absolutePath}`);
-            } catch (cleanupErr) {
-              console.error(`Failed to cleanup file ${absolutePath}:`, cleanupErr);
-            }
-          } else {
-            console.warn(`Attached file not found at path: ${absolutePath}`);
           }
         }
 

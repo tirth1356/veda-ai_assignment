@@ -11,8 +11,7 @@ import {
   FileCheck,
   Calendar,
   Award,
-  Share2,
-  Star
+  Share2
 } from 'lucide-react';
 import { useAssignmentStore, IAssignment } from '../../../store/useAssignmentStore';
 import { useLibraryStore } from '../../../store/useLibraryStore';
@@ -33,7 +32,6 @@ export default function AssignmentOutputView() {
   } = useAssignmentStore();
 
   const showToast = useToastStore((state) => state.showToast);
-  const saveQuestion = useLibraryStore((state) => state.saveQuestion);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [userName, setUserName] = useState('Teacher');
@@ -183,7 +181,7 @@ export default function AssignmentOutputView() {
             <div className="flex-1 border-b border-gray-400 min-h-[16px]"></div>
           </div>
           <div className="flex items-end gap-2">
-            <span className="shrink-0">Class: {assignment.className} Section:</span>
+            <span className="shrink-0">Section:</span>
             <div className="flex-1 border-b border-gray-400 min-h-[16px]"></div>
           </div>
         </div>
@@ -201,14 +199,19 @@ export default function AssignmentOutputView() {
                 <div key={section.title} className="space-y-4">
                   
                   {/* Section header banner */}
-                  <div className="text-center">
-                  <h3 className="text-base font-bold text-gray-900 tracking-wider uppercase underline">
-                    {section.title}
-                  </h3>
-                  <p className="text-xs italic text-gray-500 mt-1">
-                    {section.instruction}
-                  </p>
-                </div>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-wider text-center mb-4">
+                      Section {String.fromCharCode(65 + sIndex)}
+                    </h2>
+                    <div className="text-left">
+                      <h3 className="text-base font-bold text-gray-900 tracking-wider">
+                        {section.title}
+                      </h3>
+                      <p className="text-xs italic text-gray-500 mt-1">
+                        {section.instruction}
+                      </p>
+                    </div>
+                  </div>
 
                 {/* Question List */}
                 <ol className="space-y-6 pt-4 font-serif">
@@ -235,34 +238,11 @@ export default function AssignmentOutputView() {
                             />
                           )}
                           
-                          {/* Difficulty Tag and Save Button */}
+                          {/* Difficulty Tag */}
                           <div className="flex items-center gap-3 pt-1 font-sans">
                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${getDifficultyColor(q.difficulty)}`}>
                               {q.difficulty}
                             </span>
-                            <button
-                              onClick={() => {
-                                const currentAnswer = assignment.answerKey?.find(a => a.questionNumber === globalQIndex)?.answerText;
-                                saveQuestion({
-                                  questionText: q.questionText,
-                                  difficulty: q.difficulty as any,
-                                  marks: q.marks,
-                                  svgDiagram: q.svgDiagram,
-                                  answerText: currentAnswer,
-                                  subject: assignment.subject,
-                                  topic: section.title
-                                }).then(() => {
-                                  showToast('Question saved to Library', 'success');
-                                }).catch(() => {
-                                  showToast('Failed to save question', 'error');
-                                });
-                              }}
-                              className="text-gray-300 hover:text-orange-500 transition-colors flex items-center gap-1 opacity-50 hover:opacity-100"
-                              title="Save to Question Bank"
-                            >
-                              <Star className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-bold">Save to Library</span>
-                            </button>
                           </div>
                         </div>
                       </div>

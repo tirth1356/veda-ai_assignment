@@ -229,7 +229,15 @@ ${injectedContext}`;
       console.log(`Creator Agent passed validation on attempt ${attempts}.`);
       break;
     } catch (error: any) {
-      lastValidationError = error.message;
+      let errorMessage = error.message;
+      if (error.status === 429) {
+        errorMessage = "The website is running perfectly, but our free AI provider (Groq) has hit its temporary rate limit. Please wait a moment and try again! Sorry for the inconvenience.";
+        throw new Error(errorMessage);
+      } else if (error.status === 413) {
+        errorMessage = "The website is running perfectly, but the provided text is too large for our free AI provider (Groq). Please reduce the text size and try again! Sorry for the inconvenience.";
+        throw new Error(errorMessage);
+      }
+      lastValidationError = errorMessage;
       console.warn(`Creator attempt ${attempts} failed:`, lastValidationError);
       if (attempts >= maxAttempts) {
         throw new Error(`Generation failed after ${maxAttempts} attempts. Last error: ${lastValidationError}`);
