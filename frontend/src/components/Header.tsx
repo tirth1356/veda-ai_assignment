@@ -26,44 +26,33 @@ export default function Header({ onToggleMobileMenu }: HeaderProps) {
   const pathname = usePathname();
   const assignments = useAssignmentStore((state) => state.assignments);
   const logout = useAuthStore((state) => state.logout);
+  const authUser = useAuthStore((state) => state.user);
+
+  // Derive display values from the auth store's user object (source of truth)
+  const userName = authUser?.name || 'User';
+  const userEmail = authUser?.email || '';
+  const userInitials = userName
+    .split(' ')
+    .map((w: string) => w[0] || '')
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  // Refs for closing dropdowns on outside clicks
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // States
-  const [userName, setUserName] = useState('John Doe');
-  const [userEmail, setUserEmail] = useState('');
-  const [userInitials, setUserInitials] = useState('JD');
-  
-  // Dropdown toggles
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
 
-  // Refs for closing dropdowns on outside clicks
-  const notifRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const storedName = localStorage.getItem('veda_user_name');
-    const storedEmail = localStorage.getItem('veda_user_email');
     const storedAvatar = localStorage.getItem('veda_user_avatar');
-    if (storedName) {
-      setUserName(storedName);
-      const initials = storedName
-        .split(' ')
-        .map((w) => w[0] || '')
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-      setUserInitials(initials);
-    }
-    if (storedEmail) {
-      setUserEmail(storedEmail);
-    }
-    if (storedAvatar) {
-      setAvatar(storedAvatar);
-    }
-  }, []);
+    if (storedAvatar) setAvatar(storedAvatar);
+  }, [authUser]); // re-run when user changes
 
   // Handle outside clicks
   useEffect(() => {

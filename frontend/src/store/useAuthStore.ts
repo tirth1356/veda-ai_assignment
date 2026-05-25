@@ -27,6 +27,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   login: (token: string, user: User) => {
+    // Always clear ALL previous session data first to prevent cross-account leakage
+    localStorage.removeItem('veda_token');
+    localStorage.removeItem('veda_user_name');
+    localStorage.removeItem('veda_user_email');
+    localStorage.removeItem('veda_school_name');
+    localStorage.removeItem('veda_school_city');
+    localStorage.removeItem('veda_draft_assignment');
+    localStorage.removeItem('veda_user_avatar');
+    localStorage.removeItem('veda_library_items');
+
     localStorage.setItem('veda_token', token);
     localStorage.setItem('veda_user_name', user.name);
     localStorage.setItem('veda_user_email', user.email);

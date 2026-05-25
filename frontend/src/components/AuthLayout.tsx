@@ -100,6 +100,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     }
   };
 
+  const toggleMode = () => {
+    setIsLogin((prev) => !prev);
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setSchoolName('');
+    setSchoolCity('');
+    setError(null);
+  };
+
   if (isLoading) {
     return (
       <div className="w-full flex flex-col items-center justify-center h-screen bg-gray-50 gap-3">
@@ -259,7 +270,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="text-center mt-4">
           <button 
             type="button" 
-            onClick={() => setIsLogin(!isLogin)} 
+            onClick={toggleMode} 
             className="text-xs text-orange-500 hover:text-orange-600 font-bold"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
