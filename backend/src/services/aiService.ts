@@ -177,7 +177,7 @@ RULES:
 6. If the topic is too vague or meaningless, output {"error": "Topic too vague to generate valid questions."}.
 
 JSON Schema:
-{"subject":"...","className":"...","timeAllowed":"...","sections":[{"title":"Multiple Choice Questions","instruction":"...","questions":[{"questionText":"...","difficulty":"Easy|Moderate|Challenging","marks":1}]}]}`;
+{"subject":"...","className":"...","timeAllowed":"...","sections":[{"title":"Multiple Choice Questions","instruction":"...","questions":[{"questionText":"...","difficulty":"Easy|Moderate|Challenging","marks":1,"answerText":"concise answer here"}]}]}`;
 
   const creatorUserPrompt = `Generate exam paper for:
 Title: "${params.title}"
@@ -290,61 +290,25 @@ Output the corrected JSON with the same schema. No markdown.`,
   }
 
   // ==========================================
-  // AGENT 3: SOLVER AGENT (Answer Key Generation)
+  // EXTRACT ANSWERS (Replaces Solver Agent)
   // ==========================================
-  if (onProgress) onProgress('Solver Agent: Generating answer key...', 75);
+  if (onProgress) onProgress('Finalizing and saving to database...', 90);
 
-  const questionsToSolve: { number: number; text: string; marks: number }[] = [];
+  const answerKey: any[] = [];
   let index = 1;
   reviewedPaper.sections.forEach((sec: any) => {
     sec.questions.forEach((q: any) => {
-      questionsToSolve.push({ number: index++, text: q.questionText, marks: q.marks });
+      answerKey.push({
+        questionNumber: index++,
+        answerText: q.answerText || 'Answer not available.',
+      });
+      // Remove inline answerText so it conforms to the DB schema
+      delete q.answerText;
     });
   });
 
-  let solvedKey: any;
-  try {
-    const solverResponse = await openai.chat.completions.create({
-      model: modelName,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a Solver Agent. Provide concise, accurate answers for each exam question.
-Output JSON: {"answerKey":[{"questionNumber":1,"answerText":"concise answer here"},...]}
-Keep answers brief but complete. If a question is impossible or factually wrong, write "HALLUCINATION DETECTED: [reason]".
-No markdown, no extra keys.`,
-        },
-        { role: 'user', content: JSON.stringify(questionsToSolve) },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2,
-      max_tokens: 2500,
-    });
-
-    const solvedText = solverResponse.choices[0]?.message?.content || '';
-    solvedKey = JSON.parse(solvedText.trim());
-
-    const hallucinations = (solvedKey.answerKey || []).filter((a: any) =>
-      typeof a.answerText === 'string' && a.answerText.includes('HALLUCINATION DETECTED')
-    );
-    if (hallucinations.length > 0) {
-      console.warn(`Solver Agent flagged ${hallucinations.length} hallucination(s).`);
-      if (onProgress) onProgress(`Solver flagged ${hallucinations.length} questionable question(s).`, 85);
-    }
-  } catch (error) {
-    console.error('Solver Agent failed:', error);
-    solvedKey = {
-      answerKey: questionsToSolve.map((q) => ({
-        questionNumber: q.number,
-        answerText: 'Answer not available.',
-      })),
-    };
-  }
-
-  if (onProgress) onProgress('Finalizing and saving to database...', 95);
-
   return {
     ...reviewedPaper,
-    answerKey: solvedKey.answerKey,
+    answerKey,
   };
 };
