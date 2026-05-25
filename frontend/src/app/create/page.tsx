@@ -115,11 +115,23 @@ export default function CreateAssignment() {
   const [timeValue, setTimeValue] = useState(45);
   const [timeUnit, setTimeUnit] = useState('minutes');
   
-  // Advanced Difficulty Distribution
-  const [easyPct, setEasyPct] = useState(30);
-  const [mediumPct, setMediumPct] = useState(50);
-  const [hardPct, setHardPct] = useState(20);
-  const difficultySum = easyPct + mediumPct + hardPct;
+  // Difficulty Selection
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(['Mixed']);
+
+  const toggleDifficulty = (level: string) => {
+    if (selectedDifficulties.includes(level)) {
+      if (selectedDifficulties.length === 1) return; // Must keep at least one
+      setSelectedDifficulties(prev => prev.filter(l => l !== level));
+    } else {
+      if (level === 'Mixed') {
+        setSelectedDifficulties(['Mixed']);
+      } else {
+        let newSelection = selectedDifficulties.filter(l => l !== 'Mixed');
+        if (newSelection.length >= 2) newSelection.shift(); // Keep max 2
+        setSelectedDifficulties([...newSelection, level]);
+      }
+    }
+  };
 
   // Auto Save & Restore Draft
   useEffect(() => {
@@ -135,9 +147,7 @@ export default function CreateAssignment() {
           if (parsed.className) setClassName(parsed.className);
           if (parsed.questionRows) setQuestionRows(parsed.questionRows);
           if (parsed.additionalInstructions) setAdditionalInstructions(parsed.additionalInstructions);
-          if (parsed.easyPct !== undefined) setEasyPct(parsed.easyPct);
-          if (parsed.mediumPct !== undefined) setMediumPct(parsed.mediumPct);
-          if (parsed.hardPct !== undefined) setHardPct(parsed.hardPct);
+          if (parsed.selectedDifficulties) setSelectedDifficulties(parsed.selectedDifficulties);
         } else {
           localStorage.removeItem('veda_draft_assignment');
         }
@@ -149,10 +159,10 @@ export default function CreateAssignment() {
   useEffect(() => {
     if (step === 1 && title) {
       localStorage.setItem('veda_draft_assignment', JSON.stringify({
-        title, subject, className, questionRows, additionalInstructions, easyPct, mediumPct, hardPct
+        title, subject, className, questionRows, additionalInstructions, selectedDifficulties
       }));
     }
-  }, [title, subject, className, questionRows, additionalInstructions, easyPct, mediumPct, hardPct, step]);
+  }, [title, subject, className, questionRows, additionalInstructions, selectedDifficulties, step]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -379,7 +389,7 @@ export default function CreateAssignment() {
     formData.append('subject', subject);
     formData.append('className', className);
     formData.append('timeAllowed', `${timeValue} ${timeUnit}`);
-    formData.append('difficulty', JSON.stringify({ easy: easyPct, medium: mediumPct, hard: hardPct }));
+    formData.append('difficulty', selectedDifficulties.join(', '));
     
     // Map UI structure to backend JSON string
     const typesPayload = questionRows.map(row => ({
@@ -648,24 +658,30 @@ export default function CreateAssignment() {
               </div>
               <div className="flex flex-col space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-gray-600">AI Difficulty Distribution</label>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${difficultySum === 100 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    Total: {difficultySum}%
-                  </span>
+                  <label className="text-xs font-bold text-gray-600">AI Difficulty Level</label>
+                  <span className="text-[10px] font-medium text-gray-400">Select up to 2 options</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col space-y-1 flex-1">
-                    <label className="text-[10px] font-bold text-green-600">Easy %</label>
-                    <input type="number" min="0" max="100" value={easyPct} onChange={e => setEasyPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-green-200 focus:ring-1 focus:ring-green-500 rounded-lg text-xs font-semibold text-green-700 bg-green-50" />
-                  </div>
-                  <div className="flex flex-col space-y-1 flex-1">
-                    <label className="text-[10px] font-bold text-blue-600">Medium %</label>
-                    <input type="number" min="0" max="100" value={mediumPct} onChange={e => setMediumPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-blue-200 focus:ring-1 focus:ring-blue-500 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50" />
-                  </div>
-                  <div className="flex flex-col space-y-1 flex-1">
-                    <label className="text-[10px] font-bold text-red-600">Hard %</label>
-                    <input type="number" min="0" max="100" value={hardPct} onChange={e => setHardPct(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-red-200 focus:ring-1 focus:ring-red-500 rounded-lg text-xs font-semibold text-red-700 bg-red-50" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  {['Mixed', 'Easy', 'Medium', 'Difficult'].map((level) => {
+                    const isSelected = selectedDifficulties.includes(level);
+                    let colorClass = 'border-gray-200 text-gray-600 bg-white hover:bg-gray-50';
+                    if (isSelected) {
+                      if (level === 'Mixed') colorClass = 'border-purple-500 bg-purple-50 text-purple-700 font-bold';
+                      if (level === 'Easy') colorClass = 'border-green-500 bg-green-50 text-green-700 font-bold';
+                      if (level === 'Medium') colorClass = 'border-blue-500 bg-blue-50 text-blue-700 font-bold';
+                      if (level === 'Difficult') colorClass = 'border-red-500 bg-red-50 text-red-700 font-bold';
+                    }
+                    return (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => toggleDifficulty(level)}
+                        className={`flex-1 py-2 px-1 border rounded-xl text-[11px] transition-all shadow-sm ${colorClass}`}
+                      >
+                        {level}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
