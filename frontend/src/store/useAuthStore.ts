@@ -53,7 +53,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('veda_school_name');
     localStorage.removeItem('veda_school_city');
     localStorage.removeItem('veda_draft_assignment');
+    localStorage.removeItem('veda_user_avatar');
+    localStorage.removeItem('veda_library_items');
     
+    // Clear Zustand state immediately so UI updates before redirect
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+
     if (typeof window !== 'undefined') {
       window.location.href = '/';
     }

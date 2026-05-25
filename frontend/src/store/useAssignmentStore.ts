@@ -74,6 +74,7 @@ interface AssignmentStore {
   applyChanges: (id: string, feedback: string) => Promise<void>;
   setGenerationProgress: (progress: ProgressState) => void;
   clearGenerationProgress: () => void;
+  resetStore: () => void;
 }
 
 export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
@@ -82,6 +83,14 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
   currentAssignment: null,
   currentLoading: false,
   generationProgress: null,
+
+  resetStore: () => set({
+    assignments: [],
+    currentAssignment: null,
+    generationProgress: null,
+    isLoading: false,
+    currentLoading: false,
+  }),
 
   fetchAssignments: async () => {
     const token = localStorage.getItem('veda_token');
