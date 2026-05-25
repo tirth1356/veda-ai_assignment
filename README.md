@@ -1,6 +1,6 @@
 # VedaAI – AI Assessment Creator
 
-**[🔗 View Deployed Application](#)** *(Add your deployed link here)*
+**[🔗 View Deployed Application](https://vedaai-clone.vercel.app/)**
 
 VedaAI is a full-stack AI-powered assessment generator application built based on standard school exam parameters. It enables teachers to create assignments, define questions types, counts, and marks, optionally upload context material (PDF/TXT), and generate a structured exam-grade question paper complete with an answer key and PDF export in real-time.
 
