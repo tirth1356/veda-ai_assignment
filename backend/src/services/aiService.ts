@@ -138,12 +138,19 @@ export const generateAssessmentPaper = async (
           content: `You are a Refiner Agent. The teacher has an existing exam paper and wants specific edits.
 Apply ONLY the changes requested. Keep all other questions exactly as-is.
 Rewrite the corresponding answerKey entry for any modified question.
-Output a single valid JSON object with the same structure as the input (sections + answerKey).
+Output a single valid JSON object with the exact keys: {"sections": [...], "answerKey": [...]}.
 Do not include markdown, explanations, or extra keys.`,
         },
         {
           role: 'user',
-          content: `EXISTING PAPER:\n${JSON.stringify(params.existingPaper.sections)}\n\nEXISTING ANSWER KEY:\n${JSON.stringify(params.existingPaper.answerKey)}\n\nREQUESTED CHANGES:\n${params.additionalInstructions || 'No changes requested. Return paper as-is.'}`,
+          content: `EXISTING PAPER:
+{
+  "sections": ${JSON.stringify(params.existingPaper.sections)},
+  "answerKey": ${JSON.stringify(params.existingPaper.answerKey)}
+}
+
+REQUESTED CHANGES:
+${params.additionalInstructions || 'No changes requested. Return paper as-is.'}`,
         },
       ],
       response_format: { type: 'json_object' },
@@ -163,14 +170,14 @@ Output ONLY a single valid JSON object. No markdown, no explanation.
 
 RULES:
 1. Generate EXACTLY the number of questions specified. Not one more, not one less.
-2. Total marks must equal exactly the sum specified.
+2. Group questions logically into SEPARATE sections based on their question type (e.g., Multiple Choice in one section, Short Answer in another).
 3. Every question must be completely unique — no duplicates or near-duplicates.
 4. For Multiple Choice Questions: embed all 4 options (A) (B) (C) (D) directly inside questionText.
 5. Do NOT reference graphs, images, or visual diagrams. All questions must be text-only.
 6. If the topic is too vague or meaningless, output {"error": "Topic too vague to generate valid questions."}.
 
 JSON Schema:
-{"subject":"...","className":"...","timeAllowed":"...","sections":[{"title":"Section A","instruction":"...","questions":[{"questionText":"...","difficulty":"Easy|Moderate|Challenging","marks":1}]}]}`;
+{"subject":"...","className":"...","timeAllowed":"...","sections":[{"title":"Multiple Choice Questions","instruction":"...","questions":[{"questionText":"...","difficulty":"Easy|Moderate|Challenging","marks":1}]}]}`;
 
   const creatorUserPrompt = `Generate exam paper for:
 Title: "${params.title}"
