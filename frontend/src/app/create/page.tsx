@@ -530,12 +530,26 @@ export default function CreateAssignment() {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  className="mt-4 px-4 py-1.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-full text-[10px] font-bold text-gray-600 transition-colors"
-                >
-                  Browse Files
-                </button>
+                {file ? (
+                  <button
+                    type="button"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setFile(null); 
+                      if (fileInputRef.current) fileInputRef.current.value = ''; 
+                    }}
+                    className="mt-4 px-4 py-1.5 bg-red-50 border border-red-200 hover:bg-red-100 rounded-full text-[10px] font-bold text-red-600 transition-colors"
+                  >
+                    Remove File
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="mt-4 px-4 py-1.5 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-full text-[10px] font-bold text-gray-600 transition-colors"
+                  >
+                    Browse Files
+                  </button>
+                )}
               </div>
               <p className="text-[10px] text-gray-400 text-center">Upload images or documents of your preferred source material</p>
             </div>
