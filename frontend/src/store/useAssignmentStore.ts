@@ -84,9 +84,11 @@ export const useAssignmentStore = create<AssignmentStore>((set, get) => ({
   generationProgress: null,
 
   fetchAssignments: async () => {
+    const token = localStorage.getItem('veda_token');
+    if (!token) return;
+
     set({ isLoading: true });
     try {
-      const token = localStorage.getItem('veda_token');
       const response = await fetch(`${API_BASE_URL}/assignments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
